@@ -1,11 +1,76 @@
 import string
 import random
+from datetime import datetime, timezone
+
 import psycopg2
 
 
 handle = "localhost"
 # handle = "34.93.181.52"
 database = "telio_lions"
+
+
+def get_bytes(image):
+    image_bytes = b''
+    with open(image, "rb") as f:
+        byte = f.read(1)
+        while byte:
+            image_bytes += byte
+            byte = f.read(1)
+    return image_bytes
+
+
+def insert_lion_data(_id, name, click_date, image, face, whisker, lear, rear, leye, reye, nose):
+    ret = 0
+    status = "Success"
+    conn = None
+    try:
+        upload_date = datetime.now(timezone.utc)
+        click_date = upload_date
+        image_bytes = get_bytes(image)
+        face_bytes = get_bytes(face)
+        whisker_bytes = get_bytes(whisker)
+        lear_bytes = get_bytes(lear)
+        rear_bytes = get_bytes(rear)
+        leye_bytes = get_bytes(leye)
+        reye_bytes = get_bytes(reye)
+        nose_bytes = get_bytes(nose)
+
+        sql = """INSERT INTO lion_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql, (_id,
+                          name,
+                          click_date,
+                          upload_date,
+                          '0.0',
+                          '0.0',
+                          image_bytes,
+                          face_bytes,
+                          whisker_bytes,
+                          lear_bytes,
+                          rear_bytes,
+                          leye_bytes,
+                          reye_bytes,
+                          nose_bytes,))
+        _id = cur.fetchone()[0]
+        if _id:
+            conn.commit()
+            print("Committed --> " + str(_id))
+        else:
+            ret = -1
+            status = "Failed to insert lion data."
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret = -1
+        status = str(error)
+    finally:
+        if conn is not None:
+            conn.close()
+        return ret, status
 
 
 def drop_table(table_name):
@@ -61,7 +126,7 @@ def create_user_data_table():
     sql = "CREATE TABLE user_data (username text PRIMARY KEY, " \
           "id text, " \
           "name text, " \
-          "password text;"
+          "password text);"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -86,17 +151,18 @@ def create_lion_data_table():
     conn = None
     sql = "CREATE TABLE lion_data (ID text PRIMARY KEY, " \
           "Name text, " \
-          "ClickDates date[], " \
-          "UploadDates date[], " \
-          "Latitudes text[], " \
-          "Longitudes text[], " \
-          "Faces bytea[], " \
-          "Whiskers bytea[], " \
-          "LEars bytea[], " \
-          "REars byte[], " \
-          "LEyes byte[], " \
-          "REyes byte[], " \
-          "Noses byte[];"
+          "ClickDate date, " \
+          "UploadDate date, " \
+          "Latitude text, " \
+          "Longitude text, " \
+          "Image bytea, " \
+          "Face bytea, " \
+          "Whisker bytea, " \
+          "LEar bytea, " \
+          "REar bytea, " \
+          "LEye bytea, " \
+          "REye bytea, " \
+          "Nose bytea);"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,

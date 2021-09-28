@@ -16,11 +16,7 @@ from werkzeug.datastructures import FileStorage
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
     create_user_data_table, truncate_table, drop_table
 from lion_model import LionDetection
-from utils import on_board_new_lion
-
-
-def current_milli_time():
-    return round(time.time() * 1000)
+from utils import on_board_new_lion, current_milli_time
 
 
 def store_and_verify_file(file_from_request, work_dir):
@@ -56,7 +52,7 @@ def init():
 
 
 def create_app():
-    # init()
+    init()
     app = Flask("foo", instance_relative_config=True)
 
     api = Api(
@@ -88,14 +84,11 @@ def create_app():
                 args = onboard_parser.parse_args()
             except Exception as e:
                 rv = dict()
-                rv['status_codes'] = '-1'
-                rv['status_strings'] = str(e)
+                rv['status'] = str(e)
                 return rv, 404
             extract_dir = None
             download_dir = None
             try:
-                status_codes = ''
-                status_strings = ''
                 file_from_request = args['payload']
                 extract_dir = tempfile.mkdtemp()
                 download_dir = tempfile.mkdtemp()
@@ -110,22 +103,17 @@ def create_app():
                         _lion_name = _dir
                         d = os.path.join(data_dir, _lion_name)
                         _lion_images = os.listdir(d)
-                        _lion_id = str(current_milli_time())
-                        ret, status = on_board_new_lion(_lion_id, _lion_name, d, _lion_images)
-                        status_codes = status_codes + str(ret) + ','
-                        status_strings = status_strings + status + ', '
+                        on_board_new_lion(_lion_name, d, _lion_images)
                 else:
                     rv = dict()
-                    rv['status_codes'] = '-1'
-                    rv['status_strings'] = file_path_or_status
+                    rv['status'] = file_path_or_status
                     if extract_dir:
                         shutil.rmtree(extract_dir)
                     if download_dir:
                         shutil.rmtree(download_dir)
                     return rv, 404
                 rv = dict()
-                rv['status_codes'] = status_codes[:-1]
-                rv['status_strings'] = status_strings[:-1]
+                rv['status'] = "Success"
                 if extract_dir:
                     shutil.rmtree(extract_dir)
                 if download_dir:
@@ -137,8 +125,7 @@ def create_app():
                 if download_dir:
                     shutil.rmtree(download_dir)
                 rv = dict()
-                rv['status_codes'] = '-1'
-                rv['status_strings'] = str(e)
+                rv['status'] = str(e)
                 return rv, 404
 
     drop_table_parser = reqparse.RequestParser()

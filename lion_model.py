@@ -50,8 +50,7 @@ class LionDetection:
         try:
             results, time_taken = self.model.detect(image_path, name, 0.90)
         except Exception as e:
-            print(e)
-            return None, None, None
+            return None, None, None, str(e)
         time_taken += time_taken
         whiskers = []
         face_coordinates = []
@@ -61,9 +60,11 @@ class LionDetection:
                 whiskers.append(box)
             if box['class'] in [1, 2, 3, 4, 5]:
                 face_coordinates.append(box)
+        if len(whiskers) != 1 or len(face_coordinates) != 1:
+            return None, None, None, "Multiple lions detected"
         image_whiskers[name] = {"name": name, "boxes": whiskers}
         image_faces[name] = {"name": name, "boxes": face_coordinates}
-        return results, image_whiskers, image_faces
+        return results, image_whiskers, image_faces, "Success"
 
     def insideface(self, face_coord, parts_coord):
         face_coord_bbox = face_coord['ROI']
