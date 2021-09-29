@@ -2,10 +2,12 @@ import os
 import shutil
 import tempfile
 import time
+from datetime import datetime, timezone
 
 import cv2
 import numpy as np
 from PIL import Image
+from GPSPhoto import gpsphoto
 
 from skimage.transform import resize
 from keras.models import load_model
@@ -176,14 +178,55 @@ def check_upload(lion_image_path):
         return str(e)
 
 
+def dd2dms(dd):
+    mnt, sec = divmod(dd * 3600, 60)
+    deg, mnt = divmod(mnt, 60)
+    return deg, mnt, sec
+
+
+def get_click_datetime(data):
+    mm, dd, yyyy = data['Date'].split('/')
+    time = data['UTC-Time'].split('.')[0]
+    hours, mins, secs = time.split(':')
+    if len(hours) < 2:
+        hours = '0' + hours
+    if len(mins) < 2:
+        mins = '0' + mins
+    if len(secs) < 2:
+        secs = '0' + secs
+    new_time = hours + ':' + mins + ':' + secs
+    iso_dt = yyyy + '-' + mm + '-' + dd + ' ' + new_time
+    dt = datetime.fromisoformat(iso_dt)
+    return dt
+
+
 def on_board_new_lion(lion, lion_dir, rv):
     tmp_dir = None
     lion_images = os.listdir(lion_dir)
     for lion_image in lion_images:
         try:
+            lat = f"{0.0}° {0.0}' {0.0}\""
+            lon = f"{0.0}° {0.0}' {0.0}\""
+            utc_click_datetime = datetime.now(timezone.utc)
             lion_id = str(current_milli_time())
             tmp_dir = tempfile.mkdtemp()
             lion_image_path = os.path.join(lion_dir, lion_image)
+            data = gpsphoto.getGPSData(lion_image_path)
+            if len(data) > 0:
+                try:
+                    lat_deg, lat_mnt, lat_sec = dd2dms(data['Latitude'])
+                    lat = f"{lat_deg}° {lat_mnt}' {lat_sec}\""
+                except Exception as e:
+                    lat = f"{0.0}° {0.0}' {0.0}\""
+                try:
+                    lon_deg, lon_mnt, lon_sec = dd2dms(data['Longitude'])
+                    lon = f"{lon_deg}° {lon_mnt}' {lon_sec}\""
+                except Exception as e:
+                    lon = f"{0.0}° {0.0}' {0.0}\""
+                try:
+                    utc_click_datetime = get_click_datetime(data)
+                except Exception as e:
+                    utc_click_datetime = datetime.now(timezone.utc)
             pil_img = Image.open(lion_image_path)
             src = cv2.imread(lion_image_path)
             temp_image = src.copy()
@@ -198,8 +241,8 @@ def on_board_new_lion(lion, lion_dir, rv):
                 continue
             lion_path, face_path, whisker_path, lear_path, rear_path, leye_path, reye_path, nose_path, face_embedding, whisker_embedding = \
                 extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, temp_image)
-            insert_lion_data(lion_id, lion,
-                             '', lion_path,
+            insert_lion_data(lion_id, lion, utc_click_datetime,
+                             lat, lon, lion_path,
                              face_path, whisker_path,
                              lear_path, rear_path,
                              leye_path, reye_path,

@@ -12,6 +12,9 @@ torchvision==0.10.1
 keras==2.2.4
 scikit-image==0.17.2
 tensorflow==1.14.0
+gpsphoto==2.2.3
+ExifRead==2.3.2
+piexif==0.7.1
 
 pip~=21.2.4
 wheel~=0.37.0

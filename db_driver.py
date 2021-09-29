@@ -171,7 +171,8 @@ def match_lion(face_embedding, whisker_embedding):
 
 
 def insert_lion_data(_id, name,
-                     click_date,
+                     utc_click_datetime,
+                     lat, lon,
                      image, face,
                      whisker, lear,
                      rear, leye,
@@ -183,7 +184,7 @@ def insert_lion_data(_id, name,
     conn = None
     try:
         upload_date = datetime.now(timezone.utc)
-        click_date = upload_date
+        click_date = utc_click_datetime
         try:
             image_bytes = get_base64_str(image)
         except Exception as e:
@@ -227,8 +228,8 @@ def insert_lion_data(_id, name,
                           name,
                           click_date,
                           upload_date,
-                          '0.0',
-                          '0.0',
+                          lat,
+                          lon,
                           image_bytes,
                           face_bytes,
                           whisker_bytes,
