@@ -97,13 +97,18 @@ def create_app():
                     zip_handle = zipfile.ZipFile(file_path_or_status, "r")
                     zip_handle.extractall(path=extract_dir)
                     zip_handle.close()
-                    data_dir = os.path.join(extract_dir, 'test_data')
-                    _dirs = os.listdir(data_dir)
-                    for _dir in _dirs:
-                        _lion_name = _dir
-                        d = os.path.join(data_dir, _lion_name)
-                        _lion_images = os.listdir(d)
-                        on_board_new_lion(_lion_name, d, _lion_images)
+                    _payload_dir = os.path.join(extract_dir, 'payload')
+                    _lions = os.listdir(_payload_dir)
+                    rv = dict()
+                    rv['status'] = []
+                    for _lion in _lions:
+                        _lion_dir = os.path.join(_payload_dir, _lion)
+                        on_board_new_lion(_lion, _lion_dir, rv)
+                    if extract_dir:
+                        shutil.rmtree(extract_dir)
+                    if download_dir:
+                        shutil.rmtree(download_dir)
+                    return rv, 200
                 else:
                     rv = dict()
                     rv['status'] = file_path_or_status
@@ -112,13 +117,6 @@ def create_app():
                     if download_dir:
                         shutil.rmtree(download_dir)
                     return rv, 404
-                rv = dict()
-                rv['status'] = "Success"
-                if extract_dir:
-                    shutil.rmtree(extract_dir)
-                if download_dir:
-                    shutil.rmtree(download_dir)
-                return rv, 200
             except Exception as e:
                 if extract_dir:
                     shutil.rmtree(extract_dir)
