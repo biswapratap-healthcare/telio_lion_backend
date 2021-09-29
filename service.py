@@ -14,7 +14,7 @@ from flask_restplus import Resource, Api, reqparse
 from werkzeug.datastructures import FileStorage
 
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
-    create_user_data_table, truncate_table, drop_table
+    create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info
 from lion_model import LionDetection
 from utils import on_board_new_lion, current_milli_time, check_upload
 
@@ -66,6 +66,66 @@ def create_app():
 
     CORS(app)
 
+    get_lion_id_info_parser = reqparse.RequestParser()
+    get_lion_id_info_parser.add_argument('lion_id',
+                                         type=str,
+                                         help='The lion id',
+                                         required=True)
+
+    @api.route('/get_lion_id_info')
+    @api.expect(get_lion_id_info_parser)
+    class GetLionIDInfoService(Resource):
+        @api.expect(get_lion_id_info_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = get_lion_id_info_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            try:
+                lion_id = args['lion_id']
+                rv, ret = get_lion_id_info(lion_id)
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    get_lion_name_info_parser = reqparse.RequestParser()
+    get_lion_name_info_parser.add_argument('lion_name',
+                                           type=str,
+                                           help='The lion name',
+                                           required=True)
+
+    @api.route('/get_lion_name_info')
+    @api.expect(get_lion_name_info_parser)
+    class GetLionNameInfoService(Resource):
+        @api.expect(get_lion_name_info_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = get_lion_name_info_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            try:
+                lion_name = args['lion_name']
+                rv, ret = get_lion_name_info(lion_name)
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
     check_upload_parser = reqparse.RequestParser()
     check_upload_parser.add_argument('payload',
                                      location='files',
@@ -96,7 +156,7 @@ def create_app():
                     zip_handle = zipfile.ZipFile(file_path_or_status, "r")
                     zip_handle.extractall(path=extract_dir)
                     zip_handle.close()
-                    _payload_dir = os.path.join(extract_dir, 'check_upload')
+                    _payload_dir = os.path.join(extract_dir, 'check_payload')
                     _lion_images = os.listdir(_payload_dir)
                     rv = dict()
                     rv['status'] = []
@@ -157,7 +217,7 @@ def create_app():
                     zip_handle = zipfile.ZipFile(file_path_or_status, "r")
                     zip_handle.extractall(path=extract_dir)
                     zip_handle.close()
-                    _payload_dir = os.path.join(extract_dir, 'payload')
+                    _payload_dir = os.path.join(extract_dir, 'onboard_payload')
                     _lions = os.listdir(_payload_dir)
                     rv = dict()
                     rv['status'] = []

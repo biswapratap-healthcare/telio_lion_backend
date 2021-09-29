@@ -1,3 +1,4 @@
+import base64
 import string
 import random
 from scipy import spatial
@@ -19,6 +20,87 @@ def get_bytes(image):
             image_bytes += byte
             byte = f.read(1)
     return image_bytes
+
+
+def get_lion_id_info(lion_id):
+    rv = dict()
+    ret = 0
+    conn = None
+    sql = "SELECT * FROM lion_data WHERE id = %s;"
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql, (lion_id,))
+        records = cur.fetchall()
+        if len(records) != 1:
+            ret = -1
+        else:
+            record = records[0]
+            rv['id'] = record[0]
+            rv['name'] = record[1]
+            rv['click_date'] = str(record[2])
+            rv['upload_date'] = str(record[3])
+            rv['latitude'] = record[4]
+            rv['longitude'] = record[5]
+            rv['image'] = str(base64.b64encode(record[6]))
+            rv['face'] = str(base64.b64encode(record[7]))
+            rv['whisker'] = str(base64.b64encode(record[8]))
+            rv['l_ear'] = str(base64.b64encode(record[9]))
+            rv['r_ear'] = str(base64.b64encode(record[10]))
+            rv['l_eye'] = str(base64.b64encode(record[11]))
+            rv['r_eye'] = str(base64.b64encode(record[12]))
+            rv['nose'] = str(base64.b64encode(record[13]))
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return rv, ret
+
+
+def get_lion_name_info(lion_name):
+    rv = dict()
+    ret = 0
+    conn = None
+    sql = "SELECT * FROM lion_data WHERE name = %s;"
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql, (lion_name,))
+        records = cur.fetchall()
+        for idx, record in enumerate(records):
+            one_record = dict()
+            one_record['id'] = record[0]
+            one_record['name'] = record[1]
+            one_record['click_date'] = str(record[2])
+            one_record['upload_date'] = str(record[3])
+            one_record['latitude'] = record[4]
+            one_record['longitude'] = record[5]
+            one_record['image'] = str(base64.b64encode(record[6]))
+            one_record['face'] = str(base64.b64encode(record[7]))
+            one_record['whisker'] = str(base64.b64encode(record[8]))
+            one_record['l_ear'] = str(base64.b64encode(record[9]))
+            one_record['r_ear'] = str(base64.b64encode(record[10]))
+            one_record['l_eye'] = str(base64.b64encode(record[11]))
+            one_record['r_eye'] = str(base64.b64encode(record[12]))
+            one_record['nose'] = str(base64.b64encode(record[13]))
+            rv[str(idx)] = one_record
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return rv, ret
 
 
 def get_all_lion_embeddings():
