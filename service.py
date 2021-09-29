@@ -16,7 +16,7 @@ from werkzeug.datastructures import FileStorage
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
     create_user_data_table, truncate_table, drop_table
 from lion_model import LionDetection
-from utils import on_board_new_lion, current_milli_time
+from utils import on_board_new_lion, current_milli_time, check_upload
 
 
 def store_and_verify_file(file_from_request, work_dir):
@@ -65,6 +65,66 @@ def create_app():
     )
 
     CORS(app)
+
+    check_upload_parser = reqparse.RequestParser()
+    check_upload_parser.add_argument('payload',
+                                     location='files',
+                                     type=FileStorage,
+                                     help='A zip of lion images',
+                                     required=True)
+
+    @api.route('/check_upload')
+    @api.expect(check_upload_parser)
+    class CheckUploadService(Resource):
+        @api.expect(check_upload_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = check_upload_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            extract_dir = None
+            download_dir = None
+            try:
+                file_from_request = args['payload']
+                extract_dir = tempfile.mkdtemp()
+                download_dir = tempfile.mkdtemp()
+                ret, file_path_or_status = store_and_verify_file(file_from_request, download_dir)
+                if ret == 0:
+                    zip_handle = zipfile.ZipFile(file_path_or_status, "r")
+                    zip_handle.extractall(path=extract_dir)
+                    zip_handle.close()
+                    _payload_dir = os.path.join(extract_dir, 'check_upload')
+                    _lion_images = os.listdir(_payload_dir)
+                    rv = dict()
+                    rv['status'] = []
+                    for _lion_image in _lion_images:
+                        _lion_image_path = os.path.join(_payload_dir, _lion_image)
+                        ret = check_upload(_lion_image_path)
+                        rv['status'].append({'image': _lion_image, 'ret': ret})
+                    if extract_dir:
+                        shutil.rmtree(extract_dir)
+                    if download_dir:
+                        shutil.rmtree(download_dir)
+                    return rv, 200
+                else:
+                    rv = dict()
+                    rv['status'] = file_path_or_status
+                    if extract_dir:
+                        shutil.rmtree(extract_dir)
+                    if download_dir:
+                        shutil.rmtree(download_dir)
+                    return rv, 404
+            except Exception as e:
+                if extract_dir:
+                    shutil.rmtree(extract_dir)
+                if download_dir:
+                    shutil.rmtree(download_dir)
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
 
     onboard_parser = reqparse.RequestParser()
     onboard_parser.add_argument('payload',

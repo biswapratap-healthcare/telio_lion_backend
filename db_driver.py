@@ -1,5 +1,6 @@
 import string
 import random
+from scipy import spatial
 from datetime import datetime, timezone
 
 import psycopg2
@@ -18,6 +19,72 @@ def get_bytes(image):
             image_bytes += byte
             byte = f.read(1)
     return image_bytes
+
+
+def get_all_lion_embeddings():
+    ret = list()
+    conn = None
+    sql = "SELECT id, name, face_embedding, whisker_embedding FROM lion_data;"
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql)
+        ret = cur.fetchall()
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret_str = str(error)
+        ret = list()
+    finally:
+        if conn is not None:
+            conn.close()
+        return ret
+
+
+def match_lion(face_embedding, whisker_embedding):
+    ret = dict()
+    match_data = list()
+    embeddings = get_all_lion_embeddings()
+    face_embedding = [float(x) for x in face_embedding.split(',')]
+    whisker_embedding = [float(x) for x in whisker_embedding.split(',')]
+
+    for embedding in embeddings:
+        ref_id = embedding[0]
+        ref_lion_name = embedding[1]
+        ref_face_embedding = [float(x) for x in embedding[2].split(',')]
+        ref_whisker_embedding = [float(x) for x in embedding[3].split(',')]
+        face_distance = 1 - spatial.distance.cosine(ref_face_embedding, face_embedding)
+        whisker_distance = 1 - spatial.distance.cosine(ref_whisker_embedding, whisker_embedding)
+        match_data.append((ref_id, ref_lion_name, face_distance, whisker_distance))
+
+    match_data.sort(key=lambda x: x[3])
+
+    if len(match_data) > 0:
+        _1st_match = match_data[0]
+        d_1st = _1st_match[3]
+        if d_1st < 0.2:
+            ret['type'] = 'Similar'
+            ret['similar'] = [{'id': _1st_match[0], 'name': _1st_match[1]}]
+        elif d_1st > 0.2 and d_1st < 0.7:
+            ret['type'] = 'New'
+        elif d_1st > 0.7:
+            ret['type'] = 'Not'
+        else:
+            ret['type'] = 'Not'
+    if len(match_data) > 1:
+        _2nd_match = match_data[1]
+        d_2nd = _2nd_match[3]
+        if d_2nd < 0.2:
+            ret['similar'].append({'id': _2nd_match[0], 'name': _2nd_match[1]})
+    if len(match_data) > 2:
+        _3rd_match = match_data[2]
+        d_3rd = _3rd_match[3]
+        if d_3rd < 0.2:
+            ret['similar'].append({'id': _3rd_match[0], 'name': _3rd_match[1]})
+    return ret
 
 
 def insert_lion_data(_id, name,
