@@ -60,7 +60,7 @@ class LionDetection:
                 whiskers.append(box)
             if box['class'] in [1, 2, 3, 4, 5]:
                 face_coordinates.append(box)
-        if len(whiskers) != 1 or len(face_coordinates) != 1:
+        if len(whiskers) != 1 and len(face_coordinates) != 1:
             return None, None, None, "Multiple lions detected"
         image_whiskers[name] = {"name": name, "boxes": whiskers}
         image_faces[name] = {"name": name, "boxes": face_coordinates}

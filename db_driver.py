@@ -6,20 +6,17 @@ from datetime import datetime, timezone
 
 import psycopg2
 
+from config import is_whiskers
 
 handle = "localhost"
 # handle = "34.93.181.52"
 database = "telio_lions"
 
 
-def get_bytes(image):
-    image_bytes = b''
-    with open(image, "rb") as f:
-        byte = f.read(1)
-        while byte:
-            image_bytes += byte
-            byte = f.read(1)
-    return image_bytes
+def get_base64_str(image):
+    with open(image, "rb") as imageFile:
+        base64_str = str(base64.b64encode(imageFile.read()))
+    return base64_str
 
 
 def get_lion_id_info(lion_id):
@@ -45,14 +42,14 @@ def get_lion_id_info(lion_id):
             rv['upload_date'] = str(record[3])
             rv['latitude'] = record[4]
             rv['longitude'] = record[5]
-            rv['image'] = str(base64.b64encode(record[6]))
-            rv['face'] = str(base64.b64encode(record[7]))
-            rv['whisker'] = str(base64.b64encode(record[8]))
-            rv['l_ear'] = str(base64.b64encode(record[9]))
-            rv['r_ear'] = str(base64.b64encode(record[10]))
-            rv['l_eye'] = str(base64.b64encode(record[11]))
-            rv['r_eye'] = str(base64.b64encode(record[12]))
-            rv['nose'] = str(base64.b64encode(record[13]))
+            rv['image'] = record[6]
+            rv['face'] = record[7]
+            rv['whisker'] = record[8]
+            rv['l_ear'] = record[9]
+            rv['r_ear'] = record[10]
+            rv['l_eye'] = record[11]
+            rv['r_eye'] = record[12]
+            rv['nose'] = record[13]
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
@@ -84,14 +81,14 @@ def get_lion_name_info(lion_name):
             one_record['upload_date'] = str(record[3])
             one_record['latitude'] = record[4]
             one_record['longitude'] = record[5]
-            one_record['image'] = str(base64.b64encode(record[6]))
-            one_record['face'] = str(base64.b64encode(record[7]))
-            one_record['whisker'] = str(base64.b64encode(record[8]))
-            one_record['l_ear'] = str(base64.b64encode(record[9]))
-            one_record['r_ear'] = str(base64.b64encode(record[10]))
-            one_record['l_eye'] = str(base64.b64encode(record[11]))
-            one_record['r_eye'] = str(base64.b64encode(record[12]))
-            one_record['nose'] = str(base64.b64encode(record[13]))
+            one_record['image'] = record[6]
+            one_record['face'] = record[7]
+            one_record['whisker'] = record[8]
+            one_record['l_ear'] = record[9]
+            one_record['r_ear'] = record[10]
+            one_record['l_eye'] = record[11]
+            one_record['r_eye'] = record[12]
+            one_record['nose'] = record[13]
             rv[str(idx)] = one_record
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
@@ -138,33 +135,37 @@ def match_lion(face_embedding, whisker_embedding):
         ref_lion_name = embedding[1]
         ref_face_embedding = [float(x) for x in embedding[2].split(',')]
         ref_whisker_embedding = [float(x) for x in embedding[3].split(',')]
-        face_distance = 1 - spatial.distance.cosine(ref_face_embedding, face_embedding)
-        whisker_distance = 1 - spatial.distance.cosine(ref_whisker_embedding, whisker_embedding)
+        face_distance = spatial.distance.cosine(ref_face_embedding, face_embedding)
+        whisker_distance = spatial.distance.cosine(ref_whisker_embedding, whisker_embedding)
         match_data.append((ref_id, ref_lion_name, face_distance, whisker_distance))
 
-    match_data.sort(key=lambda x: x[3])
+    if is_whiskers:
+        index = 3
+    else:
+        index = 2
+    match_data.sort(key=lambda x: x[index])
 
     if len(match_data) > 0:
         _1st_match = match_data[0]
-        d_1st = _1st_match[3]
-        if d_1st < 0.2:
+        d_1st = _1st_match[index]
+        if d_1st < 0.10:
             ret['type'] = 'Similar'
             ret['similar'] = [{'id': _1st_match[0], 'name': _1st_match[1]}]
-        elif d_1st > 0.2 and d_1st < 0.7:
+        elif d_1st > 0.10 and d_1st < 0.25:
             ret['type'] = 'New'
-        elif d_1st > 0.7:
+        elif d_1st > 0.25:
             ret['type'] = 'Not'
         else:
             ret['type'] = 'Not'
     if len(match_data) > 1:
         _2nd_match = match_data[1]
-        d_2nd = _2nd_match[3]
-        if d_2nd < 0.2:
+        d_2nd = _2nd_match[index]
+        if d_2nd < 0.10:
             ret['similar'].append({'id': _2nd_match[0], 'name': _2nd_match[1]})
     if len(match_data) > 2:
         _3rd_match = match_data[2]
-        d_3rd = _3rd_match[3]
-        if d_3rd < 0.2:
+        d_3rd = _3rd_match[index]
+        if d_3rd < 0.10:
             ret['similar'].append({'id': _3rd_match[0], 'name': _3rd_match[1]})
     return ret
 
@@ -183,14 +184,38 @@ def insert_lion_data(_id, name,
     try:
         upload_date = datetime.now(timezone.utc)
         click_date = upload_date
-        image_bytes = get_bytes(image)
-        face_bytes = get_bytes(face)
-        whisker_bytes = get_bytes(whisker)
-        lear_bytes = get_bytes(lear)
-        rear_bytes = get_bytes(rear)
-        leye_bytes = get_bytes(leye)
-        reye_bytes = get_bytes(reye)
-        nose_bytes = get_bytes(nose)
+        try:
+            image_bytes = get_base64_str(image)
+        except Exception as e:
+            image_bytes = ''
+            pass
+        face_bytes = get_base64_str(face)
+        whisker_bytes = get_base64_str(whisker)
+        try:
+            lear_bytes = get_base64_str(lear)
+        except Exception as e:
+            lear_bytes = ''
+            pass
+        try:
+            rear_bytes = get_base64_str(rear)
+        except Exception as e:
+            rear_bytes = ''
+            pass
+        try:
+            leye_bytes = get_base64_str(leye)
+        except Exception as e:
+            leye_bytes = ''
+            pass
+        try:
+            reye_bytes = get_base64_str(reye)
+        except Exception as e:
+            reye_bytes = ''
+            pass
+        try:
+            nose_bytes = get_base64_str(nose)
+        except Exception as e:
+            nose_bytes = ''
+            pass
 
         sql = """INSERT INTO lion_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
         conn = psycopg2.connect(host=handle,
@@ -313,14 +338,14 @@ def create_lion_data_table():
           "upload_date date, " \
           "latitude text, " \
           "longitude text, " \
-          "image bytea, " \
-          "face bytea, " \
-          "whisker bytea, " \
-          "l_ear bytea, " \
-          "r_ear bytea, " \
-          "l_eye bytea, " \
-          "r_eye bytea, " \
-          "nose bytea, " \
+          "image text, " \
+          "face text, " \
+          "whisker text, " \
+          "l_ear text, " \
+          "r_ear text, " \
+          "l_eye text, " \
+          "r_eye text, " \
+          "nose text, " \
           "face_embedding text, " \
           "whisker_embedding text);"
     try:
