@@ -20,7 +20,14 @@ def get_bytes(image):
     return image_bytes
 
 
-def insert_lion_data(_id, name, click_date, image, face, whisker, lear, rear, leye, reye, nose):
+def insert_lion_data(_id, name,
+                     click_date,
+                     image, face,
+                     whisker, lear,
+                     rear, leye,
+                     reye, nose,
+                     face_embedding,
+                     whisker_embedding):
     ret = 0
     status = "Success"
     conn = None
@@ -36,7 +43,7 @@ def insert_lion_data(_id, name, click_date, image, face, whisker, lear, rear, le
         reye_bytes = get_bytes(reye)
         nose_bytes = get_bytes(nose)
 
-        sql = """INSERT INTO lion_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
+        sql = """INSERT INTO lion_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
         conn = psycopg2.connect(host=handle,
                                 database=database,
                                 user="postgres",
@@ -55,7 +62,9 @@ def insert_lion_data(_id, name, click_date, image, face, whisker, lear, rear, le
                           rear_bytes,
                           leye_bytes,
                           reye_bytes,
-                          nose_bytes,))
+                          nose_bytes,
+                          face_embedding,
+                          whisker_embedding))
         _id = cur.fetchone()[0]
         if _id:
             conn.commit()
@@ -149,20 +158,22 @@ def create_lion_data_table():
     ret = 0
     status = "Success"
     conn = None
-    sql = "CREATE TABLE lion_data (ID text PRIMARY KEY, " \
-          "Name text, " \
-          "ClickDate date, " \
-          "UploadDate date, " \
-          "Latitude text, " \
-          "Longitude text, " \
-          "Image bytea, " \
-          "Face bytea, " \
-          "Whisker bytea, " \
-          "LEar bytea, " \
-          "REar bytea, " \
-          "LEye bytea, " \
-          "REye bytea, " \
-          "Nose bytea);"
+    sql = "CREATE TABLE lion_data (id text PRIMARY KEY, " \
+          "name text, " \
+          "click_date date, " \
+          "upload_date date, " \
+          "latitude text, " \
+          "longitude text, " \
+          "image bytea, " \
+          "face bytea, " \
+          "whisker bytea, " \
+          "l_ear bytea, " \
+          "r_ear bytea, " \
+          "l_eye bytea, " \
+          "r_eye bytea, " \
+          "nose bytea, " \
+          "face_embedding text, " \
+          "whisker_embedding text);"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,

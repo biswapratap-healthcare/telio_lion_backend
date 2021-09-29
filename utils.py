@@ -80,12 +80,13 @@ def on_board_new_lion(lion, lion_dir, rv):
             leye_path = ''
             reye_path = ''
             nose_path = ''
+            face_embedding = ''
+            whisker_embedding = ''
             lion_id = str(current_milli_time())
             tmp_dir = tempfile.mkdtemp()
             lion_image_path = os.path.join(lion_dir, lion_image)
             pil_img = Image.open(lion_image_path)
             src = cv2.imread(lion_image_path)
-            calculate_embeddings([np.asarray(src)], batch_size=1)
             temp_image = src.copy()
             coordinates, whisker_cords, face_cords, status = lion_model.get_coordinates(lion_image_path, lion)
             if status != "Success":
@@ -130,10 +131,20 @@ def on_board_new_lion(lion, lion_dir, rv):
                                 face = face.crop((xmin, ymin, xmax, ymax, ))
                                 face_path = os.path.join(tmp_dir, "face.jpg")
                                 face.save(face_path)
+                                face_arr = cv2.imread(face_path)
+                                face_emb = calculate_embeddings([np.asarray(face_arr)], batch_size=1)
+                                face_str_embedding = [str(a) for a in list(face_emb[0])]
+                                face_embedding = ','.join(face_str_embedding)
+                                print('c')
                             elif coord['class'] in [27, 28, 29, 30, 31]:
                                 whisker = whisker.crop((xmin, ymin, xmax, ymax, ))
                                 whisker_path = os.path.join(tmp_dir, "whisker.jpg")
                                 whisker.save(whisker_path)
+                                whisker_arr = cv2.imread(whisker_path)
+                                whisker_emb = calculate_embeddings([np.asarray(whisker_arr)], batch_size=1)
+                                whisker_str_embedding = [str(a) for a in list(whisker_emb[0])]
+                                whisker_embedding = ','.join(whisker_str_embedding)
+                                print('c')
                             elif coord['class'] in [6, 8, 10, 12]:
                                 lear = lear.crop((xmin, ymin, xmax, ymax, ))
                                 lear_path = os.path.join(tmp_dir, "lear.jpg")
@@ -157,11 +168,12 @@ def on_board_new_lion(lion, lion_dir, rv):
                 lion_path = os.path.join(tmp_dir, "lion.jpg")
                 cv2.imwrite(lion_path, temp_image)
                 insert_lion_data(lion_id, lion,
-                                 '0.0.0', lion_path,
+                                 '', lion_path,
                                  face_path, whisker_path,
                                  lear_path, rear_path,
                                  leye_path, reye_path,
-                                 nose_path)
+                                 nose_path, face_embedding,
+                                 whisker_embedding)
                 shutil.rmtree(tmp_dir)
                 r = dict()
                 r['lion_name'] = lion
