@@ -43,11 +43,11 @@ def get_current_count():
             sex = record[0]
             status = record[1]
             if sex == 'M':
-                male_lions +=1
+                male_lions += 1
             elif sex == 'F':
-                female_lions +=1
+                female_lions += 1
             else:
-                unknown_sex_lions +=1
+                unknown_sex_lions += 1
             if status == 'D':
                 dead_lions += 1
             else:
