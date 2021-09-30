@@ -8,8 +8,8 @@ import psycopg2
 
 from config import is_whiskers
 
-#handle = "localhost"
-handle = "34.93.181.52"
+handle = "localhost"
+# handle = "34.93.181.52"
 database = "telio_lions"
 
 
@@ -17,6 +17,55 @@ def get_base64_str(image):
     with open(image, "rb") as imageFile:
         base64_str = str(base64.b64encode(imageFile.read()))
     return base64_str
+
+
+def get_current_count():
+    ret = dict()
+    r = 0
+    male_lions = 0
+    female_lions = 0
+    unknown_sex_lions = 0
+    alive_lions = 0
+    dead_lions = 0
+    conn = None
+    sql = "SELECT sex, status FROM lion_data;"
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql)
+        records = cur.fetchall()
+        cur.close()
+        total_lions = len(records)
+        for record in records:
+            sex = record[0]
+            status = record[1]
+            if sex == 'M':
+                male_lions +=1
+            elif sex == 'F':
+                female_lions +=1
+            else:
+                unknown_sex_lions +=1
+            if status == 'D':
+                dead_lions += 1
+            else:
+                alive_lions += 1
+        ret['total'] = str(total_lions)
+        ret['male'] = str(male_lions)
+        ret['female'] = str(female_lions)
+        ret['unknown_sex'] = str(unknown_sex_lions)
+        ret['alive'] = str(alive_lions)
+        ret['dead'] = str(dead_lions)
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret = dict()
+        r = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return ret, r
 
 
 def get_user_parameter(username, parameter_name):
