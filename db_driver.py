@@ -8,8 +8,8 @@ import psycopg2
 
 from config import is_whiskers
 
-handle = "localhost"
-# handle = "34.93.181.52"
+#handle = "localhost"
+handle = "34.93.181.52"
 database = "telio_lions"
 
 
