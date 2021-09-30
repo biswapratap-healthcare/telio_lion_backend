@@ -1,21 +1,19 @@
 import os
 import shutil
 import tempfile
-import time
 import zipfile
-from datetime import datetime, timezone
 
 from waitress import serve
 from flask_cors import CORS
-from flask import Flask, send_file
+from flask import Flask
 
 from werkzeug.utils import secure_filename
 from flask_restplus import Resource, Api, reqparse
 from werkzeug.datastructures import FileStorage
 
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
-    create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info
-from lion_model import LionDetection
+    create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info, get_data, \
+    update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id
 from utils import on_board_new_lion, current_milli_time, check_upload
 
 
@@ -65,6 +63,294 @@ def create_app():
     )
 
     CORS(app)
+
+    delete_lion_id_parser = reqparse.RequestParser()
+    delete_lion_id_parser.add_argument('username',
+                                       type=str,
+                                       help='An admin user name',
+                                       required=True)
+    delete_lion_id_parser.add_argument('lion_id',
+                                       type=str,
+                                       help='The instance of lion id to be deleted',
+                                       required=True)
+
+    @api.route('/delete_lion_id')
+    @api.expect(delete_lion_id_parser)
+    class DeleteLionIDService(Resource):
+        @api.expect(delete_lion_id_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = delete_lion_id_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['health'] = str(e)
+                return rv, 404
+            try:
+                username = args['username']
+                lion_id = args['lion_id']
+                ret_str, ret = delete_lion_id(username, lion_id)
+                rv = dict()
+                rv['status'] = ret_str
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    delete_lion_name_parser = reqparse.RequestParser()
+    delete_lion_name_parser.add_argument('username',
+                                         type=str,
+                                         help='An admin user name',
+                                         required=True)
+    delete_lion_name_parser.add_argument('lion_name',
+                                         type=str,
+                                         help='All the instances of lion name to be deleted',
+                                         required=True)
+
+    @api.route('/delete_lion_name')
+    @api.expect(delete_lion_name_parser)
+    class DeleteLionNameService(Resource):
+        @api.expect(delete_lion_name_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = delete_lion_name_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['health'] = str(e)
+                return rv, 404
+            try:
+                username = args['username']
+                lion_name = args['lion_name']
+                ret_str, ret = delete_lion_name(username, lion_name)
+                rv = dict()
+                rv['status'] = ret_str
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    delete_user_parser = reqparse.RequestParser()
+    delete_user_parser.add_argument('username1',
+                                    type=str,
+                                    help='In case an admin is deleting username2, '
+                                         'then the admin username, else optional',
+                                    required=False)
+    delete_user_parser.add_argument('username2',
+                                    type=str,
+                                    help='The username to be deleted',
+                                    required=True)
+    delete_user_parser.add_argument('password2',
+                                    type=str,
+                                    help='The password of the username to be deleted, if admin then optional',
+                                    required=False)
+
+    @api.route('/delete_user')
+    @api.expect(delete_user_parser)
+    class DeleteUserService(Resource):
+        @api.expect(delete_user_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = delete_user_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['health'] = str(e)
+                return rv, 404
+            try:
+                try:
+                    username1 = args['username1']
+                    if username1 is None:
+                        username1 = ''
+                except Exception as e:
+                    username1 = ''
+                username2 = args['username2']
+                try:
+                    password2 = args['password2']
+                    if password2 is None:
+                        password2 = ''
+                except Exception as e:
+                    password2 = ''
+                ret_str, ret = delete_user(username1, username2, password2)
+                rv = dict()
+                rv['status'] = ret_str
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    edit_user_data_parser = reqparse.RequestParser()
+    edit_user_data_parser.add_argument('user_name',
+                                       type=str,
+                                       help='The user name',
+                                       required=True)
+    edit_user_data_parser.add_argument('param_name',
+                                       type=str,
+                                       help='The param name - name or email or phone or role',
+                                       required=True)
+    edit_user_data_parser.add_argument('param_value',
+                                       type=str,
+                                       help='The param value',
+                                       required=True)
+    edit_user_data_parser.add_argument('password',
+                                       type=str,
+                                       help='The password (Optional, if role is admin) ',
+                                       required=False)
+
+    @api.route('/edit_user_data')
+    @api.expect(edit_user_data_parser)
+    class EditUserDataService(Resource):
+        @api.expect(edit_user_data_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = edit_user_data_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['health'] = str(e)
+                return rv, 404
+            try:
+                user_name = args['user_name']
+                param_name = args['param_name']
+                param_value = args['param_value']
+                try:
+                    password = args['password']
+                    if password is None:
+                        password = ''
+                except Exception as e:
+                    password = ''
+                ret_str, ret = update_user_parameter(user_name, password, param_name, param_value)
+                rv = dict()
+                rv['status'] = ret_str
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    edit_lion_status_parser = reqparse.RequestParser()
+    edit_lion_status_parser.add_argument('lion_name',
+                                         type=str,
+                                         help='The lion name',
+                                         required=True)
+    edit_lion_status_parser.add_argument('lion_status',
+                                         type=str,
+                                         help='The lion status, A - Alive or D - Dead',
+                                         required=True)
+
+    @api.route('/edit_lion_status')
+    @api.expect(edit_lion_status_parser)
+    class EditLionStatusService(Resource):
+        @api.expect(edit_lion_status_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = edit_lion_status_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['health'] = str(e)
+                return rv, 404
+            try:
+                lion_name = args['lion_name']
+                lion_status = args['lion_status']
+                ret_str, ret = update_lion_name_parameter(lion_name, 'status', lion_status)
+                rv = dict()
+                rv['status'] = ret_str
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    edit_lion_sex_parser = reqparse.RequestParser()
+    edit_lion_sex_parser.add_argument('lion_name',
+                                      type=str,
+                                      help='The lion name',
+                                      required=True)
+    edit_lion_sex_parser.add_argument('lion_sex',
+                                      type=str,
+                                      help='The lion sex, M - Male or F - Female or U - Unknown',
+                                      required=True)
+
+    @api.route('/edit_lion_sex')
+    @api.expect(edit_lion_sex_parser)
+    class EditLionSexService(Resource):
+        @api.expect(edit_lion_sex_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = edit_lion_sex_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['health'] = str(e)
+                return rv, 404
+            try:
+                lion_name = args['lion_name']
+                lion_sex = args['lion_sex']
+                ret_str, ret = update_lion_name_parameter(lion_name, 'sex', lion_sex)
+                rv = dict()
+                rv['status'] = ret_str
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('offset',
+                            type=int,
+                            help='Offset from which records needs to be read',
+                            required=True)
+    get_parser.add_argument('count',
+                            type=int,
+                            help='Number of records to be read from offset',
+                            required=True)
+
+    @api.route('/list')
+    @api.expect(get_parser)
+    class ListService(Resource):
+        @api.expect(get_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = get_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['health'] = str(e)
+                return rv, 404
+            try:
+                offset = args['offset']
+                count = args['count']
+                rv, ret = get_data(offset, count)
+                if ret != 0:
+                    return rv, 404
+                else:
+                    return rv, 200
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
 
     get_lion_id_info_parser = reqparse.RequestParser()
     get_lion_id_info_parser.add_argument('lion_id',
@@ -361,9 +647,17 @@ def create_app():
                                         type=str,
                                         help='Name',
                                         required=True)
-    create_new_user_parser.add_argument('id',
+    create_new_user_parser.add_argument('email',
                                         type=str,
-                                        help='ID Number',
+                                        help='Email of user',
+                                        required=True)
+    create_new_user_parser.add_argument('phone',
+                                        type=str,
+                                        help='Phone number of user',
+                                        required=True)
+    create_new_user_parser.add_argument('role',
+                                        type=str,
+                                        help='Roles - admin, user',
                                         required=True)
     create_new_user_parser.add_argument('un',
                                         type=str,
@@ -384,11 +678,14 @@ def create_app():
                 return rv, 404
             try:
                 _name = args['name']
-                _id = args['id']
+                _email = args['email']
+                _phone = args['phone']
+                _role = args['role']
                 _un = args['un']
-                ret, status = create_new_user(_name, _id, _un)
+                pwd, ret, status = create_new_user(_name, _email, _phone, _role, _un)
                 rv = dict()
                 rv['status'] = status
+                rv['password'] = pwd
                 if ret == 0:
                     return rv, 200
                 else:

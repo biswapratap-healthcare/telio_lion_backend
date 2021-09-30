@@ -241,7 +241,9 @@ def on_board_new_lion(lion, lion_dir, rv):
                 continue
             lion_path, face_path, whisker_path, lear_path, rear_path, leye_path, reye_path, nose_path, face_embedding, whisker_embedding = \
                 extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, temp_image)
-            insert_lion_data(lion_id, lion, utc_click_datetime,
+            insert_lion_data(lion_id, lion,
+                             'U', 'A',
+                             utc_click_datetime,
                              lat, lon, lion_path,
                              face_path, whisker_path,
                              lear_path, rear_path,
