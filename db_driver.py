@@ -288,7 +288,8 @@ def get_data(offset, count):
     rv = dict()
     ret = 0
     conn = None
-    sql = """SELECT * FROM lion_data OFFSET %s ROWS FETCH FIRST %s ROW ONLY;"""
+    sql = """SELECT id, name, sex, status, click_date, upload_date, latitude, longitude 
+    FROM lion_data OFFSET %s ROWS FETCH FIRST %s ROW ONLY;"""
 
     try:
         conn = psycopg2.connect(host=handle,
@@ -334,7 +335,8 @@ def get_lion_id_info(lion_id):
     rv = dict()
     ret = 0
     conn = None
-    sql = "SELECT * FROM lion_data WHERE id = %s;"
+    sql = "SELECT id, name, sex, status, click_date, upload_date, latitude, longitude, " \
+          "face, whisker, l_ear, r_ear, l_eye, r_eye, nose FROM lion_data WHERE id = %s;"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -377,7 +379,8 @@ def get_lion_name_info(lion_name):
     rv = dict()
     ret = 0
     conn = None
-    sql = "SELECT * FROM lion_data WHERE name = %s;"
+    sql = "SELECT id, name, sex, status, click_date, upload_date, latitude, longitude, " \
+          "face, whisker, l_ear, r_ear, l_eye, r_eye, nose FROM lion_data WHERE name = %s;"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
