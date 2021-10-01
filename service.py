@@ -13,7 +13,8 @@ from werkzeug.datastructures import FileStorage
 
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
     create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info, get_data, \
-    update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id, get_current_count
+    update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id, get_current_count, \
+    get_all_lions
 from utils import on_board_new_lion, current_milli_time, check_upload
 
 
@@ -64,10 +65,25 @@ def create_app():
 
     CORS(app)
 
+    @api.route('/get_all_lions')
+    class GetAllLionsService(Resource):
+        @api.doc(responses={"response": 'json'})
+        def get(self):
+            try:
+                ret, r = get_all_lions()
+                if r == 0:
+                    return ret, 200
+                else:
+                    return ret, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
     @api.route('/get_count')
     class GetCountService(Resource):
         @api.doc(responses={"response": 'json'})
-        def post(self):
+        def get(self):
             try:
                 ret, r = get_current_count()
                 if r == 0:

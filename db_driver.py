@@ -1,6 +1,7 @@
 import base64
 import string
 import random
+import pandas as pd
 from scipy import spatial
 from datetime import datetime, timezone
 
@@ -17,6 +18,54 @@ def get_base64_str(image):
     with open(image, "rb") as imageFile:
         base64_str = str(base64.b64encode(imageFile.read()))
     return base64_str
+
+
+def aggregate(x):
+    ret_row = x.iloc[0]
+    ref_datetime = datetime.fromisoformat('1970-01-01 00:00:00')
+    for index, row in x.iterrows():
+        click_date = row['click_date']
+        if click_date > ref_datetime:
+            ref_datetime = click_date
+            ret_row = row
+    return ret_row
+
+
+def get_all_lions():
+    ret = 0
+    conn = None
+    lions = dict()
+    sql = "SELECT name, sex, status, click_date, upload_date, latitude, longitude FROM lion_data;"
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql)
+        records = cur.fetchall()
+        cur.close()
+        df = pd.DataFrame(records, columns=['name', 'sex', 'status', 'click_date',
+                                            'upload_date', 'latitude', 'longitude'])
+        df = df.groupby(['name'])['sex', 'status', 'click_date', 'upload_date', 'latitude', 'longitude'].\
+            apply(lambda x: aggregate(x)).reset_index()
+        for index, row in df.iterrows():
+            info = dict()
+            info['sex'] = row['sex']
+            info['status'] = row['status']
+            info['click_date'] = str(row['click_date'])
+            info['upload_date'] = str(row['upload_date'])
+            info['latitude'] = row['latitude']
+            info['longitude'] = row['longitude']
+            lions[row['name']] = info
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        lions = dict()
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return lions, ret
 
 
 def get_current_count():
@@ -249,7 +298,7 @@ def get_data(offset, count):
         cur = conn.cursor()
         cur.execute(sql, (offset, count,))
         records = cur.fetchall()
-        lions = list()
+        lions_instances = list()
         for record in records:
             one_record = dict()
             one_record['id'] = record[0]
@@ -268,8 +317,8 @@ def get_data(offset, count):
             # one_record['l_eye'] = record[13]
             # one_record['r_eye'] = record[14]
             # one_record['nose'] = record[15]
-            lions.append(one_record)
-        rv['lions'] = lions
+            lions_instances.append(one_record)
+        rv['lions_instances'] = lions_instances
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
@@ -337,7 +386,7 @@ def get_lion_name_info(lion_name):
         cur = conn.cursor()
         cur.execute(sql, (lion_name,))
         records = cur.fetchall()
-        record_list = list()
+        lions_instances = list()
         for record in records:
             one_record = dict()
             one_record['id'] = record[0]
@@ -356,8 +405,8 @@ def get_lion_name_info(lion_name):
             one_record['l_eye'] = record[13]
             one_record['r_eye'] = record[14]
             one_record['nose'] = record[15]
-            record_list.append(one_record)
-        rv['lions'] = record_list
+            lions_instances.append(one_record)
+        rv['lions_instances'] = lions_instances
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
@@ -609,8 +658,8 @@ def create_lion_data_table():
           "name text, " \
           "sex text, " \
           "status text, " \
-          "click_date date, " \
-          "upload_date date, " \
+          "click_date timestamp without time zone, " \
+          "upload_date timestamp without time zone, " \
           "latitude text, " \
           "longitude text, " \
           "image text, " \

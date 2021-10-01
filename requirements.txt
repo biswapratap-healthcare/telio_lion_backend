@@ -15,6 +15,7 @@ tensorflow==1.14.0
 gpsphoto==2.2.3
 ExifRead==2.3.2
 piexif==0.7.1
+pandas==1.1.5
 
 pip~=21.2.4
 wheel~=0.37.0
