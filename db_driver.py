@@ -259,14 +259,14 @@ def get_data(offset, count):
             one_record['upload_date'] = str(record[5])
             one_record['latitude'] = record[6]
             one_record['longitude'] = record[7]
-            one_record['image'] = record[8]
-            one_record['face'] = record[9]
-            one_record['whisker'] = record[10]
-            one_record['l_ear'] = record[11]
-            one_record['r_ear'] = record[12]
-            one_record['l_eye'] = record[13]
-            one_record['r_eye'] = record[14]
-            one_record['nose'] = record[15]
+            # one_record['image'] = record[8]
+            # one_record['face'] = record[9]
+            # one_record['whisker'] = record[10]
+            # one_record['l_ear'] = record[11]
+            # one_record['r_ear'] = record[12]
+            # one_record['l_eye'] = record[13]
+            # one_record['r_eye'] = record[14]
+            # one_record['nose'] = record[15]
             rv[str(idx)] = one_record
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
@@ -304,7 +304,7 @@ def get_lion_id_info(lion_id):
             rv['upload_date'] = str(record[5])
             rv['latitude'] = record[6]
             rv['longitude'] = record[7]
-            rv['image'] = record[8]
+            # rv['image'] = record[8]
             rv['face'] = record[9]
             rv['whisker'] = record[10]
             rv['l_ear'] = record[11]
@@ -345,7 +345,7 @@ def get_lion_name_info(lion_name):
             one_record['upload_date'] = str(record[5])
             one_record['latitude'] = record[6]
             one_record['longitude'] = record[7]
-            one_record['image'] = record[8]
+            # one_record['image'] = record[8]
             one_record['face'] = record[9]
             one_record['whisker'] = record[10]
             one_record['l_ear'] = record[11]
