@@ -646,7 +646,7 @@ def create_app():
                 _pw = args['pw']
                 ret = login(_un, _pw)
                 rv = dict()
-                if ret == 0:
+                if ret is True:
                     rv['status'] = "Login Success"
                     return rv, 200
                 else:
