@@ -249,7 +249,8 @@ def get_data(offset, count):
         cur = conn.cursor()
         cur.execute(sql, (offset, count,))
         records = cur.fetchall()
-        for idx, record in enumerate(records):
+        lions = list()
+        for record in records:
             one_record = dict()
             one_record['id'] = record[0]
             one_record['name'] = record[1]
@@ -267,7 +268,8 @@ def get_data(offset, count):
             # one_record['l_eye'] = record[13]
             # one_record['r_eye'] = record[14]
             # one_record['nose'] = record[15]
-            rv[str(idx)] = one_record
+            lions.append(one_record)
+        rv['lions'] = lions
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
@@ -335,7 +337,8 @@ def get_lion_name_info(lion_name):
         cur = conn.cursor()
         cur.execute(sql, (lion_name,))
         records = cur.fetchall()
-        for idx, record in enumerate(records):
+        record_list = list()
+        for record in records:
             one_record = dict()
             one_record['id'] = record[0]
             one_record['name'] = record[1]
@@ -353,7 +356,8 @@ def get_lion_name_info(lion_name):
             one_record['l_eye'] = record[13]
             one_record['r_eye'] = record[14]
             one_record['nose'] = record[15]
-            rv[str(idx)] = one_record
+            record_list.append(one_record)
+        rv['lions'] = record_list
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
