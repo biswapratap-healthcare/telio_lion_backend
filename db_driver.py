@@ -34,7 +34,7 @@ def aggregate(x):
 def get_all_lions():
     ret = 0
     conn = None
-    lions = dict()
+    rv = dict()
     sql = "SELECT name, sex, status, click_date, upload_date, latitude, longitude FROM lion_data;"
     try:
         conn = psycopg2.connect(host=handle,
@@ -49,23 +49,26 @@ def get_all_lions():
                                             'upload_date', 'latitude', 'longitude'])
         df = df.groupby(['name'])['sex', 'status', 'click_date', 'upload_date', 'latitude', 'longitude'].\
             apply(lambda x: aggregate(x)).reset_index()
+        lions = list()
         for index, row in df.iterrows():
             info = dict()
+            info['name'] = row['name']
             info['sex'] = row['sex']
             info['status'] = row['status']
             info['click_date'] = str(row['click_date'])
             info['upload_date'] = str(row['upload_date'])
             info['latitude'] = row['latitude']
             info['longitude'] = row['longitude']
-            lions[row['name']] = info
+            lions.append(info)
+        rv['lions'] = lions
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
-        lions = dict()
+        rv = dict()
         ret = -1
     finally:
         if conn is not None:
             conn.close()
-        return lions, ret
+        return rv, ret
 
 
 def get_current_count():
