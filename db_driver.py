@@ -16,7 +16,7 @@ database = "telio_lions"
 
 def get_base64_str(image):
     with open(image, "rb") as imageFile:
-        base64_str = str(base64.b64encode(imageFile.read()))
+        base64_str = str(base64.b64encode(imageFile.read()))[2:-1]
     return base64_str
 
 
