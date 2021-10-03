@@ -120,6 +120,35 @@ def get_current_count():
         return ret, r
 
 
+def get_lion_parameter(lion_id, parameter_name):
+    ret = 0
+    ret_str = ""
+    conn = None
+    sql = "SELECT " + parameter_name + " FROM lion_data WHERE id = %s;"
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql, (lion_id,))
+        records = cur.fetchall()
+        cur.close()
+        if len(records) == 1:
+            ret_str = str(records[0][0])
+        else:
+            ret = -1
+            ret_str = 'Not Found'
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret_str = str(error)
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return ret_str, ret
+
+
 def get_user_parameter(username, parameter_name):
     ret = 0
     ret_str = ""

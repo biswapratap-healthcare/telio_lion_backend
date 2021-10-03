@@ -200,6 +200,67 @@ def get_click_datetime(data):
     return dt
 
 
+def upload_one_lion(lion_image_path, lion_name):
+    tmp_dir = tempfile.mkdtemp()
+    try:
+        lat = f"{0.0}° {0.0}' {0.0}\""
+        lon = f"{0.0}° {0.0}' {0.0}\""
+        utc_click_datetime = datetime.now(timezone.utc)
+        lion_id = str(current_milli_time())
+        data = gpsphoto.getGPSData(lion_image_path)
+        if len(data) > 0:
+            try:
+                lat_deg, lat_mnt, lat_sec = dd2dms(data['Latitude'])
+                lat = f"{lat_deg}° {lat_mnt}' {lat_sec}\""
+            except Exception as e:
+                lat = f"{0.0}° {0.0}' {0.0}\""
+            try:
+                lon_deg, lon_mnt, lon_sec = dd2dms(data['Longitude'])
+                lon = f"{lon_deg}° {lon_mnt}' {lon_sec}\""
+            except Exception as e:
+                lon = f"{0.0}° {0.0}' {0.0}\""
+            try:
+                utc_click_datetime = get_click_datetime(data)
+            except Exception as e:
+                utc_click_datetime = datetime.now(timezone.utc)
+        pil_img = Image.open(lion_image_path)
+        src = cv2.imread(lion_image_path)
+        temp_image = src.copy()
+        coordinates, whisker_cords, face_cords, status = lion_model.get_coordinates(lion_image_path, lion_name)
+        if status != "Success":
+            print(status)
+            r = dict()
+            r['lion_name'] = lion_name
+            r['lion_image_file_name'] = os.path.basename(lion_image_path)
+            r['status'] = status
+            return r
+        lion_path, face_path, whisker_path, lear_path, rear_path, leye_path, reye_path, nose_path, face_embedding, whisker_embedding = \
+            extract_lion_data(face_cords, lion_name, pil_img, coordinates, tmp_dir, temp_image)
+        insert_lion_data(lion_id, lion_name,
+                         'U', 'A',
+                         utc_click_datetime,
+                         lat, lon, lion_path,
+                         face_path, whisker_path,
+                         lear_path, rear_path,
+                         leye_path, reye_path,
+                         nose_path, face_embedding,
+                         whisker_embedding)
+        shutil.rmtree(tmp_dir)
+        r = dict()
+        r['lion_name'] = lion_name
+        r['lion_image_file_name'] = os.path.basename(lion_image_path)
+        r['status'] = 'Success'
+        return r
+    except Exception as e:
+        if tmp_dir and os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir)
+        r = dict()
+        r['lion_name'] = lion_name
+        r['lion_image_file_name'] = os.path.basename(lion_image_path)
+        r['status'] = str(e)
+        return r
+
+
 def on_board_new_lion(lion, lion_dir, rv):
     tmp_dir = None
     lion_images = os.listdir(lion_dir)

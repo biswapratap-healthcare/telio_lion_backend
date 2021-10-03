@@ -14,8 +14,8 @@ from werkzeug.datastructures import FileStorage
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
     create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info, get_data, \
     update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id, get_current_count, \
-    get_all_lions
-from utils import on_board_new_lion, current_milli_time, check_upload
+    get_all_lions, get_lion_parameter
+from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
 
 
 def store_and_verify_file(file_from_request, work_dir):
@@ -90,6 +90,70 @@ def create_app():
                     return ret, 200
                 else:
                     return ret, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    upload_parser = reqparse.RequestParser()
+    upload_parser.add_argument('instance_file',
+                               location='files',
+                               type=FileStorage,
+                               help='The instance file to be uploaded.',
+                               required=True)
+    upload_parser.add_argument('name',
+                               type=str,
+                               help='The name of the lion (optional).',
+                               required=False)
+    upload_parser.add_argument('id',
+                               type=str,
+                               help='The id of the lion image which is similar to (optional).',
+                               required=False)
+
+    @api.route('/upload')
+    @api.expect(upload_parser)
+    class UploadService(Resource):
+        @api.expect(upload_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = upload_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            try:
+                temp_dir = tempfile.mkdtemp()
+                file_from_request = args['instance_file']
+                ret, status_file_path = store_and_verify_file(file_from_request, temp_dir)
+                if ret != 0:
+                    rv = dict()
+                    rv['status'] = status_file_path
+                    return rv, 404
+                try:
+                    name = args['name']
+                    if name is None:
+                        name = ''
+                except Exception as e:
+                    name = ''
+                try:
+                    _id = args['id']
+                    if _id is None:
+                        _id = ''
+                except Exception as e:
+                    _id = ''
+                if len(name) == 0 and len(_id) == 0:
+                    rv = dict()
+                    rv['status'] = "both are empty"
+                    return rv, 404
+                if len(name) == 0:
+                    name, ret = get_lion_parameter(_id, 'name')
+                    if ret != 0:
+                        rv = dict()
+                        rv['status'] = "no name associated with id"
+                        return rv, 404
+                rv = upload_one_lion(status_file_path, name)
+                return rv, 200
             except Exception as e:
                 rv = dict()
                 rv['status'] = str(e)
