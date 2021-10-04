@@ -295,7 +295,7 @@ def update_lion_name_parameter(lion_name, var_name, var_value):
     ret = 0
     ret_str = "Success"
     conn = None
-    sql = "UPDATE lion_data SET " + var_name + " = %s WHERE lion_name = %s;"
+    sql = "UPDATE lion_data SET " + var_name + " = %s WHERE name = %s;"
 
     try:
         conn = psycopg2.connect(host=handle,
@@ -478,8 +478,14 @@ def match_lion(face_embedding, whisker_embedding):
     ret = dict()
     match_data = list()
     embeddings = get_all_lion_embeddings()
-    face_embedding = [float(x) for x in face_embedding.split(',')]
-    whisker_embedding = [float(x) for x in whisker_embedding.split(',')]
+    if len(face_embedding) == 0:
+        face_embedding = [float(0.0) for _ in range(0, 128, 1)]
+    else:
+        face_embedding = [float(x) for x in face_embedding.split(',')]
+    if len(whisker_embedding) == 0:
+        whisker_embedding = [float(0.0) for _ in range(0, 128, 1)]
+    else:
+        whisker_embedding = [float(x) for x in whisker_embedding.split(',')]
 
     for embedding in embeddings:
         ref_id = embedding[0]
@@ -495,6 +501,9 @@ def match_lion(face_embedding, whisker_embedding):
     else:
         index = 2
     match_data.sort(key=lambda x: x[index])
+
+    if len(match_data) == 0:
+        ret['type'] = 'New'
 
     if len(match_data) > 0:
         _1st_match = match_data[0]
