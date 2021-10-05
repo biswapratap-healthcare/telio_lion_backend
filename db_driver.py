@@ -316,6 +316,36 @@ def update_lion_name_parameter(lion_name, var_name, var_value):
         return ret_str, ret
 
 
+def get_user_info(username):
+    rv = dict()
+    ret = 0
+    conn = None
+    sql = """SELECT username, name, email, phone, role FROM user_data WHERE username = %s;"""
+
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql, (username,))
+        record = cur.fetchall()[0]
+        rv['username'] = record[0]
+        rv['name'] = record[1]
+        rv['email'] = record[2]
+        rv['phone'] = record[3]
+        rv['role'] = str(record[4])
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret = -1
+        rv = dict()
+    finally:
+        if conn is not None:
+            conn.close()
+        return rv, ret
+
+
 def get_data(offset, count):
     rv = dict()
     ret = 0

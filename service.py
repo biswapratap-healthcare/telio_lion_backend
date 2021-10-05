@@ -14,7 +14,7 @@ from werkzeug.datastructures import FileStorage
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
     create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info, get_data, \
     update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id, get_current_count, \
-    get_all_lions, get_lion_parameter
+    get_all_lions, get_lion_parameter, get_user_info
 from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
 
 
@@ -407,6 +407,36 @@ def create_app():
                     return rv, 200
                 else:
                     return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    get_user_info_parser = reqparse.RequestParser()
+    get_user_info_parser.add_argument('username',
+                                      type=str,
+                                      help='The user name',
+                                      required=True)
+
+    @api.route('/get_user_info')
+    @api.expect(get_user_info_parser)
+    class GetUserInfoService(Resource):
+        @api.expect(get_user_info_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = get_user_info_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            try:
+                _username = args['username']
+                rv, ret = get_user_info(_username)
+                if ret != 0:
+                    return rv, 404
+                else:
+                    return rv, 200
             except Exception as e:
                 rv = dict()
                 rv['status'] = str(e)
