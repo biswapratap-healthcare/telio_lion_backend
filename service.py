@@ -724,10 +724,12 @@ def create_app():
             try:
                 _un = args['un']
                 _pw = args['pw']
-                ret = login(_un, _pw)
+                ret, role = login(_un, _pw)
                 rv = dict()
                 if ret is True:
                     rv['status'] = "Login Success"
+                    rv['un'] = _un
+                    rv['role'] = role
                     return rv, 200
                 else:
                     rv['status'] = "Login Failed"

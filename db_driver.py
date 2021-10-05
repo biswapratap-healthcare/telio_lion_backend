@@ -235,7 +235,7 @@ def delete_lion_name(username, lion_name):
 def delete_user(username1, username2, password2):
     role, ret = get_user_parameter(username1, 'role')
     if role != 'admin':
-        ret = login(username2, password2)
+        ret, rr = login(username2, password2)
         if ret is False:
             return "Insufficient Permissions", -1
     ret = 0
@@ -264,7 +264,7 @@ def delete_user(username1, username2, password2):
 def update_user_parameter(username, password, var_name, var_value):
     role, ret = get_user_parameter(username, 'role')
     if role != 'admin':
-        ret = login(username, password)
+        ret, rr = login(username, password)
         if ret is False:
             return "Insufficient Permissions", -1
     ret = 0
@@ -320,8 +320,7 @@ def get_data(offset, count):
     rv = dict()
     ret = 0
     conn = None
-    sql = """SELECT id, name, sex, status, click_date, upload_date, latitude, longitude 
-    FROM lion_data OFFSET %s ROWS FETCH FIRST %s ROW ONLY;"""
+    sql = """SELECT username, name, email, phone, role FROM user_data OFFSET %s ROWS FETCH FIRST %s ROW ONLY;"""
 
     try:
         conn = psycopg2.connect(host=handle,
@@ -331,27 +330,16 @@ def get_data(offset, count):
         cur = conn.cursor()
         cur.execute(sql, (offset, count,))
         records = cur.fetchall()
-        lions_instances = list()
+        user_instances = list()
         for record in records:
             one_record = dict()
-            one_record['id'] = record[0]
+            one_record['username'] = record[0]
             one_record['name'] = record[1]
-            one_record['sex'] = record[2]
-            one_record['status'] = record[3]
-            one_record['click_date'] = str(record[4])
-            one_record['upload_date'] = str(record[5])
-            one_record['latitude'] = record[6]
-            one_record['longitude'] = record[7]
-            # one_record['image'] = record[8]
-            # one_record['face'] = record[9]
-            # one_record['whisker'] = record[10]
-            # one_record['l_ear'] = record[11]
-            # one_record['r_ear'] = record[12]
-            # one_record['l_eye'] = record[13]
-            # one_record['r_eye'] = record[14]
-            # one_record['nose'] = record[15]
-            lions_instances.append(one_record)
-        rv['lions_instances'] = lions_instances
+            one_record['email'] = record[2]
+            one_record['phone'] = record[3]
+            one_record['role'] = str(record[4])
+            user_instances.append(one_record)
+        rv['users'] = user_instances
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
@@ -756,7 +744,7 @@ def if_table_exists(table_name='lion_data'):
 
 
 def modify_password(_un, _old_pw, _new_pw):
-    ret = login(_un, _old_pw)
+    ret, rr = login(_un, _old_pw)
     if ret is True:
         ret_str, ret = update_user_parameter(_un, _old_pw, 'password', _new_pw)
     else:
@@ -767,6 +755,7 @@ def modify_password(_un, _old_pw, _new_pw):
 
 def login(un, pwd):
     ret = True
+    role = ''
     conn = None
     sql = """select password from user_data where username = %s"""
     try:
@@ -779,19 +768,27 @@ def login(un, pwd):
         record = cur.fetchall()
         if len(record) != 1:
             ret = False
+            role = ''
         else:
             record = record[0]
             if str(record[0]) != pwd:
                 ret = False
+                role = ''
             else:
-                ret = True
+                role, ret_code = get_user_parameter(un, 'role')
+                if ret_code != 0:
+                    ret = False
+                    role = ''
+                else:
+                    ret = True
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
         ret = False
+        role = ''
     finally:
         if conn is not None:
             conn.close()
-        return ret
+        return ret, role
 
 
 def create_new_user(_name, _email, _phone, _role, _un):
