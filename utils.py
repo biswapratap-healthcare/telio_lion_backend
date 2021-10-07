@@ -12,7 +12,7 @@ from GPSPhoto import gpsphoto
 from skimage.transform import resize
 from keras.models import load_model
 
-from db_driver import insert_lion_data, match_lion
+from db_driver import insert_lion_data, match_lion, get_base64_str
 from lion_model import LionDetection, classes
 
 
@@ -247,8 +247,10 @@ def upload_one_lion(lion_image_path, lion_name):
                          whisker_embedding)
         shutil.rmtree(tmp_dir)
         r = dict()
+        face_bytes = get_base64_str(face_path)
         r['lion_name'] = lion_name
         r['lion_image_file_name'] = os.path.basename(lion_image_path)
+        r['image'] = face_bytes
         r['status'] = 'Success'
         return r
     except Exception as e:

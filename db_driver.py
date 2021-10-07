@@ -35,7 +35,7 @@ def get_all_lions():
     ret = 0
     conn = None
     rv = dict()
-    sql = "SELECT name, sex, status, click_date, upload_date, latitude, longitude FROM lion_data;"
+    sql = "SELECT name, sex, status, click_date, upload_date, latitude, longitude, face FROM lion_data;"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -46,8 +46,8 @@ def get_all_lions():
         records = cur.fetchall()
         cur.close()
         df = pd.DataFrame(records, columns=['name', 'sex', 'status', 'click_date',
-                                            'upload_date', 'latitude', 'longitude'])
-        df = df.groupby(['name'])['sex', 'status', 'click_date', 'upload_date', 'latitude', 'longitude'].\
+                                            'upload_date', 'latitude', 'longitude', 'face'])
+        df = df.groupby(['name'])['sex', 'status', 'click_date', 'upload_date', 'latitude', 'longitude', 'face'].\
             apply(lambda x: aggregate(x)).reset_index()
         lions = list()
         for index, row in df.iterrows():
@@ -59,6 +59,7 @@ def get_all_lions():
             info['upload_date'] = str(row['upload_date'])
             info['latitude'] = row['latitude']
             info['longitude'] = row['longitude']
+            info['face'] = row['face']
             lions.append(info)
         rv['lions'] = lions
     except (Exception, psycopg2.DatabaseError) as error:
