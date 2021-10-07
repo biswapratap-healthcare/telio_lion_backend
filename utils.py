@@ -170,7 +170,9 @@ def check_upload(lion_image_path):
             return status
         lion_path, face_path, whisker_path, lear_path, rear_path, leye_path, reye_path, nose_path, face_embedding, whisker_embedding = \
             extract_lion_data(face_cords, 'temp_lion', pil_img, coordinates, tmp_dir, temp_image)
-        ret = match_lion(face_embedding, whisker_embedding)
+        ret = dict()
+        ret['ref_lion_face'] = get_base64_str(face_path)
+        match_lion(face_embedding, whisker_embedding, ret)
         return ret
     except Exception as e:
         if tmp_dir and os.path.exists(tmp_dir):
@@ -245,12 +247,12 @@ def upload_one_lion(lion_image_path, lion_name):
                          leye_path, reye_path,
                          nose_path, face_embedding,
                          whisker_embedding)
-        face_bytes = get_base64_str(face_path)
+        # face_bytes = get_base64_str(face_path)
         shutil.rmtree(tmp_dir)
         r = dict()
         r['lion_name'] = lion_name
         r['lion_image_file_name'] = os.path.basename(lion_image_path)
-        r['image'] = face_bytes
+        # r['image'] = face_bytes
         r['status'] = 'Success'
         return r
     except Exception as e:

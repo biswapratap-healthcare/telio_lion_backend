@@ -493,8 +493,7 @@ def get_all_lion_embeddings():
         return ret
 
 
-def match_lion(face_embedding, whisker_embedding):
-    ret = dict()
+def match_lion(face_embedding, whisker_embedding, ret):
     match_data = list()
     embeddings = get_all_lion_embeddings()
     if len(face_embedding) == 0:
