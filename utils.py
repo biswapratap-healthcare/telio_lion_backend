@@ -245,9 +245,9 @@ def upload_one_lion(lion_image_path, lion_name):
                          leye_path, reye_path,
                          nose_path, face_embedding,
                          whisker_embedding)
+        face_bytes = get_base64_str(face_path)
         shutil.rmtree(tmp_dir)
         r = dict()
-        face_bytes = get_base64_str(face_path)
         r['lion_name'] = lion_name
         r['lion_image_file_name'] = os.path.basename(lion_image_path)
         r['image'] = face_bytes
