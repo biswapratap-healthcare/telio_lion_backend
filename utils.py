@@ -171,7 +171,13 @@ def check_upload(lion_image_path):
         lion_path, face_path, whisker_path, lear_path, rear_path, leye_path, reye_path, nose_path, face_embedding, whisker_embedding = \
             extract_lion_data(face_cords, 'temp_lion', pil_img, coordinates, tmp_dir, temp_image)
         ret = dict()
-        ret['ref_lion_face'] = get_base64_str(face_path)
+        ret['ref_face'] = get_base64_str(face_path)
+        ret['ref_whisker'] = get_base64_str(whisker_path)
+        ret['ref_lear'] = get_base64_str(lear_path)
+        ret['ref_rear'] = get_base64_str(rear_path)
+        ret['ref_leye'] = get_base64_str(leye_path)
+        ret['ref_reye'] = get_base64_str(reye_path)
+        ret['ref_nose'] = get_base64_str(nose_path)
         match_lion(face_embedding, whisker_embedding, ret)
         return ret
     except Exception as e:

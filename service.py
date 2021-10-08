@@ -338,24 +338,28 @@ def create_app():
                 rv['status'] = str(e)
                 return rv, 404
 
-    edit_lion_status_parser = reqparse.RequestParser()
-    edit_lion_status_parser.add_argument('lion_name',
-                                         type=str,
-                                         help='The lion name',
-                                         required=True)
-    edit_lion_status_parser.add_argument('lion_status',
-                                         type=str,
-                                         help='The lion status, A - Alive or D - Dead',
-                                         required=True)
+    edit_lion_data_parser = reqparse.RequestParser()
+    edit_lion_data_parser.add_argument('lion_name',
+                                       type=str,
+                                       help='The lion name',
+                                       required=True)
+    edit_lion_data_parser.add_argument('lion_status',
+                                       type=str,
+                                       help='The lion status, A - Alive or D - Dead',
+                                       required=True)
+    edit_lion_data_parser.add_argument('lion_sex',
+                                       type=str,
+                                       help='The lion sex, M - Male or F - Female or U - Unknown',
+                                       required=True)
 
-    @api.route('/edit_lion_status')
-    @api.expect(edit_lion_status_parser)
-    class EditLionStatusService(Resource):
-        @api.expect(edit_lion_status_parser)
+    @api.route('/edit_lion_data')
+    @api.expect(edit_lion_data_parser)
+    class EditLionDataService(Resource):
+        @api.expect(edit_lion_data_parser)
         @api.doc(responses={"response": 'json'})
         def post(self):
             try:
-                args = edit_lion_status_parser.parse_args()
+                args = edit_lion_data_parser.parse_args()
             except Exception as e:
                 rv = dict()
                 rv['health'] = str(e)
@@ -363,47 +367,12 @@ def create_app():
             try:
                 lion_name = args['lion_name']
                 lion_status = args['lion_status']
-                ret_str, ret = update_lion_name_parameter(lion_name, 'status', lion_status)
-                rv = dict()
-                rv['status'] = ret_str
-                if ret == 0:
-                    return rv, 200
-                else:
-                    return rv, 404
-            except Exception as e:
-                rv = dict()
-                rv['status'] = str(e)
-                return rv, 404
-
-    edit_lion_sex_parser = reqparse.RequestParser()
-    edit_lion_sex_parser.add_argument('lion_name',
-                                      type=str,
-                                      help='The lion name',
-                                      required=True)
-    edit_lion_sex_parser.add_argument('lion_sex',
-                                      type=str,
-                                      help='The lion sex, M - Male or F - Female or U - Unknown',
-                                      required=True)
-
-    @api.route('/edit_lion_sex')
-    @api.expect(edit_lion_sex_parser)
-    class EditLionSexService(Resource):
-        @api.expect(edit_lion_sex_parser)
-        @api.doc(responses={"response": 'json'})
-        def post(self):
-            try:
-                args = edit_lion_sex_parser.parse_args()
-            except Exception as e:
-                rv = dict()
-                rv['health'] = str(e)
-                return rv, 404
-            try:
-                lion_name = args['lion_name']
                 lion_sex = args['lion_sex']
-                ret_str, ret = update_lion_name_parameter(lion_name, 'sex', lion_sex)
+                ret_str, ret_status = update_lion_name_parameter(lion_name, 'status', lion_status)
+                ret_str, ret_sex = update_lion_name_parameter(lion_name, 'sex', lion_sex)
                 rv = dict()
                 rv['status'] = ret_str
-                if ret == 0:
+                if ret_status == 0 and ret_sex == 0:
                     return rv, 200
                 else:
                     return rv, 404
