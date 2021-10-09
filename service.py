@@ -287,9 +287,13 @@ def create_app():
                 return rv, 404
 
     edit_user_data_parser = reqparse.RequestParser()
-    edit_user_data_parser.add_argument('user_name',
+    edit_user_data_parser.add_argument('who',
                                        type=str,
-                                       help='The user name',
+                                       help='Who is changing the user data.',
+                                       required=True)
+    edit_user_data_parser.add_argument('whose',
+                                       type=str,
+                                       help='Whose user data is being changed.',
                                        required=True)
     edit_user_data_parser.add_argument('param_name',
                                        type=str,
@@ -301,7 +305,7 @@ def create_app():
                                        required=True)
     edit_user_data_parser.add_argument('password',
                                        type=str,
-                                       help='The password (Optional, if role is admin) ',
+                                       help='The password of whose (Optional, if who is admin) ',
                                        required=False)
 
     @api.route('/edit_user_data')
@@ -317,7 +321,8 @@ def create_app():
                 rv['health'] = str(e)
                 return rv, 404
             try:
-                user_name = args['user_name']
+                who = args['who']
+                whose = args['whose']
                 param_name = args['param_name']
                 param_value = args['param_value']
                 try:
@@ -326,7 +331,7 @@ def create_app():
                         password = ''
                 except Exception as e:
                     password = ''
-                ret_str, ret = update_user_parameter(user_name, password, param_name, param_value)
+                ret_str, ret = update_user_parameter(who, whose, password, param_name, param_value)
                 rv = dict()
                 rv['status'] = ret_str
                 if ret == 0:

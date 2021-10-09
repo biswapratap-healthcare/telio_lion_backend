@@ -265,10 +265,10 @@ def delete_user(username1, username2, password2):
         return ret_str, ret
 
 
-def update_user_parameter(username, password, var_name, var_value):
-    role, ret = get_user_parameter(username, 'role')
+def update_user_parameter(who, whose, password, var_name, var_value):
+    role, ret = get_user_parameter(who, 'role')
     if role != 'admin':
-        ret, rr = login(username, password)
+        ret, rr = login(whose, password)
         if ret is False:
             return "Insufficient Permissions", -1
     ret = 0
@@ -282,7 +282,7 @@ def update_user_parameter(username, password, var_name, var_value):
                                 user="postgres",
                                 password="admin")
         cur = conn.cursor()
-        cur.execute(sql, (var_value, username,))
+        cur.execute(sql, (var_value, whose,))
         conn.commit()
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
