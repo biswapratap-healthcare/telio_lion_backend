@@ -166,8 +166,11 @@ def check_upload(lion_image_path):
         temp_image = src.copy()
         coordinates, whisker_cords, face_cords, status = lion_model.get_coordinates(lion_image_path, 'temp_lion')
         if status != "Success":
+            ret = dict()
+            ret['ref_face'] = get_base64_str(lion_image_path)
+            ret['ref_status'] = status
             print(status)
-            return status
+            return ret
         lion_path, face_path, whisker_path, lear_path, rear_path, leye_path, reye_path, nose_path, face_embedding, whisker_embedding = \
             extract_lion_data(face_cords, 'temp_lion', pil_img, coordinates, tmp_dir, temp_image)
         ret = dict()
