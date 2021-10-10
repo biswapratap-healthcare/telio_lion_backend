@@ -500,21 +500,44 @@ def match_lion(face_embedding, whisker_embedding, ret):
     match_data = list()
     embeddings = get_all_lion_embeddings()
     if len(face_embedding) == 0:
-        face_embedding = [float(0.0) for _ in range(0, 128, 1)]
+        face_emb = [float(0.0) for _ in range(0, 128, 1)]
     else:
-        face_embedding = [float(x) for x in face_embedding.split(',')]
+        face_emb = list()
+        for x in face_embedding.split(','):
+            try:
+                face_emb.append(float(x))
+            except Exception as e:
+                print(x)
+                face_emb.append(float('0.0'))
     if len(whisker_embedding) == 0:
-        whisker_embedding = [float(0.0) for _ in range(0, 128, 1)]
+        whisker_emb = [float(0.0) for _ in range(0, 128, 1)]
     else:
-        whisker_embedding = [float(x) for x in whisker_embedding.split(',')]
-
+        whisker_emb = list()
+        for x in whisker_embedding.split(','):
+            try:
+                whisker_emb.append(float(x))
+            except Exception as e:
+                print(x)
+                whisker_emb.append(float('0.0'))
     for embedding in embeddings:
         ref_id = embedding[0]
         ref_lion_name = embedding[1]
-        ref_face_embedding = [float(x) for x in embedding[2].split(',')]
-        ref_whisker_embedding = [float(x) for x in embedding[3].split(',')]
-        face_distance = spatial.distance.cosine(ref_face_embedding, face_embedding)
-        whisker_distance = spatial.distance.cosine(ref_whisker_embedding, whisker_embedding)
+        ref_face_embedding = list()
+        for x in embedding[2].split(','):
+            try:
+                ref_face_embedding.append(float(x))
+            except Exception as e:
+                print(x)
+                ref_face_embedding.append(float('0.0'))
+        ref_whisker_embedding = list()
+        for x in embedding[3].split(','):
+            try:
+                ref_whisker_embedding.append(float(x))
+            except Exception as e:
+                print(x)
+                ref_whisker_embedding.append(float('0.0'))
+        face_distance = spatial.distance.cosine(ref_face_embedding, face_emb)
+        whisker_distance = spatial.distance.cosine(ref_whisker_embedding, whisker_emb)
         match_data.append((ref_id, ref_lion_name, face_distance, whisker_distance))
 
     if is_whiskers:
