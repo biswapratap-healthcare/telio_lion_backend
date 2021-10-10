@@ -811,7 +811,7 @@ def admin_reset_password(_admin_username, _admin_password, _username):
             n = 10
             _pwd = ''.join(random.choices(string.ascii_uppercase + string.digits, k=n))
             ret = 0
-            ret_str = "Success"
+            ret_str = _pwd
             conn = None
             sql = "UPDATE user_data SET password = %s WHERE username = %s;"
 

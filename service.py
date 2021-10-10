@@ -826,9 +826,9 @@ def create_app():
                 _admin_username = args['admin_username']
                 _admin_password = args['admin_password']
                 _username = args['username']
-                ret, status = admin_reset_password(_admin_username, _admin_password, _username)
+                status_or_pwd, ret = admin_reset_password(_admin_username, _admin_password, _username)
                 rv = dict()
-                rv['status'] = status
+                rv['pwd'] = status_or_pwd
                 if ret == 0:
                     return rv, 200
                 else:
