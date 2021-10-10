@@ -796,6 +796,48 @@ def create_app():
                 rv['status'] = str(e)
                 return rv, 404
 
+    admin_reset_password_parser = reqparse.RequestParser()
+    admin_reset_password_parser.add_argument('admin_username',
+                                             type=str,
+                                             help='An Admin User Name',
+                                             required=True)
+    admin_reset_password_parser.add_argument('admin_password',
+                                             type=str,
+                                             help='The Admin Password',
+                                             required=True)
+    admin_reset_password_parser.add_argument('username',
+                                             type=str,
+                                             help='The user whose password has to be reset.',
+                                             required=True)
+
+    @api.route('/admin_reset_password')
+    @api.expect(admin_reset_password_parser)
+    class AdminResetPasswordService(Resource):
+        @api.expect(admin_reset_password_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = admin_reset_password_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            try:
+                _admin_username = args['admin_username']
+                _admin_password = args['admin_password']
+                _username = args['username']
+                ret, status = admin_reset_password(_admin_username, _admin_password, _username)
+                rv = dict()
+                rv['status'] = status
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
     modify_password_parser = reqparse.RequestParser()
     modify_password_parser.add_argument('un',
                                         type=str,

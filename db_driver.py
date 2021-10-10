@@ -799,6 +799,41 @@ def if_table_exists(table_name='lion_data'):
         return ret
 
 
+def admin_reset_password(_admin_username, _admin_password, _username):
+    role, ret = get_user_parameter(_admin_username, 'role')
+    if role != 'admin':
+        return "Insufficient Permissions", -1
+    else:
+        ret, rr = login(_admin_username, _admin_password)
+        if ret is False:
+            return "Invalid Admin Username Password", -1
+        else:
+            n = 10
+            _pwd = ''.join(random.choices(string.ascii_uppercase + string.digits, k=n))
+            ret = 0
+            ret_str = "Success"
+            conn = None
+            sql = "UPDATE user_data SET password = %s WHERE username = %s;"
+
+            try:
+                conn = psycopg2.connect(host=handle,
+                                        database=database,
+                                        user="postgres",
+                                        password="admin")
+                cur = conn.cursor()
+                cur.execute(sql, (_pwd, _username,))
+                conn.commit()
+                cur.close()
+            except (Exception, psycopg2.DatabaseError) as error:
+                print("DB Error: " + str(error))
+                ret_str = str(error)
+                ret = -1
+            finally:
+                if conn is not None:
+                    conn.close()
+                return ret_str, ret
+
+
 def modify_password(_un, _old_pw, _new_pw):
     ret, rr = login(_un, _old_pw)
     if ret is True:
