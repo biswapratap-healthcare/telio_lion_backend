@@ -538,24 +538,30 @@ def match_lion(face_embedding, whisker_embedding, ret):
                 ref_whisker_embedding.append(float('0.0'))
         face_distance = spatial.distance.cosine(ref_face_embedding, face_emb)
         whisker_distance = spatial.distance.cosine(ref_whisker_embedding, whisker_emb)
-        match_data.append((ref_id, ref_lion_name, face_distance, whisker_distance))
+        if is_whiskers:
+            d = face_distance
+        else:
+            d = whisker_distance
+        if d != 0:
+            match_data.append((ref_id, ref_lion_name, face_distance, whisker_distance))
 
     if is_whiskers:
         index = 3
     else:
         index = 2
-    match_data.sort(key=lambda x: x[index])
 
     if len(match_data) == 0:
         ret['type'] = 'New'
+    else:
+        match_data.sort(key=lambda x1: x1[index])
 
     if len(match_data) > 0:
         _1st_match = match_data[0]
         d_1st = _1st_match[index]
-        if d_1st < 0.10:
+        if d_1st < 0.20:
             ret['type'] = 'Similar'
             ret['similar'] = [{'id': _1st_match[0], 'name': _1st_match[1]}]
-        elif d_1st > 0.10 and d_1st < 0.25:
+        elif d_1st > 0.20 and d_1st < 0.25:
             ret['type'] = 'New'
         elif d_1st > 0.25:
             ret['type'] = 'Not'
@@ -564,12 +570,12 @@ def match_lion(face_embedding, whisker_embedding, ret):
     if len(match_data) > 1:
         _2nd_match = match_data[1]
         d_2nd = _2nd_match[index]
-        if d_2nd < 0.10:
+        if d_2nd < 0.20:
             ret['similar'].append({'id': _2nd_match[0], 'name': _2nd_match[1]})
     if len(match_data) > 2:
         _3rd_match = match_data[2]
         d_3rd = _3rd_match[index]
-        if d_3rd < 0.10:
+        if d_3rd < 0.20:
             ret['similar'].append({'id': _3rd_match[0], 'name': _3rd_match[1]})
     return ret
 
