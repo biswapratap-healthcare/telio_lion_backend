@@ -6,3 +6,6 @@ venv_3.8/
 zips/
 result_zips/
 *.pth
+Preprocessed_Images/
+data/
+*.csv
