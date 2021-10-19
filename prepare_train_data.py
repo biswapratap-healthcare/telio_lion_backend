@@ -50,10 +50,10 @@ if __name__ == "__main__":
                     extract_lion_data(face_cords, 'temp_lion', pil_img, coordinates, tmp_dir, temp_image)
                 if len(face_path) > 0:
                     shutil.copy(face_path, lion_face_filepath)
-                    face_df.loc[len(face_df.index)] = [lion_face_filepath, lion_name_dir]
+                    face_df.loc[len(face_df.index)] = [lion_face_filename, lion_name_dir]
                 if len(whisker_path) > 0:
                     shutil.copy(whisker_path, lion_whisker_filepath)
-                    whisker_df.loc[len(whisker_df.index)] = [lion_whisker_filepath, lion_name_dir]
+                    whisker_df.loc[len(whisker_df.index)] = [lion_whisker_filename, lion_name_dir]
             except Exception as e:
                 if tmp_dir and os.path.exists(tmp_dir):
                     shutil.rmtree(tmp_dir)
