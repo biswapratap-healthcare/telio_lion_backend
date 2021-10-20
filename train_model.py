@@ -67,7 +67,7 @@ if __name__ == "__main__":
     triplet_model.compile(loss=None, optimizer=Adam(0.01), metrics=['accuracy'])
 
     data = pd.read_csv(path_csv)
-    train, test = train_test_split(data, train_size=0.7, random_state=1337)
+    train, test = train_test_split(data, train_size=0.9, random_state=1337)
     file_id_mapping_train = {k: v for k, v in zip(train.Image.values, train.Id.values)}
     file_id_mapping_test = {k: v for k, v in zip(test.Image.values, test.Id.values)}
     gen_tr = gen(SampleGen(file_id_mapping_train))
@@ -75,10 +75,10 @@ if __name__ == "__main__":
 
     history = triplet_model.fit_generator(gen_tr,
                                           validation_data=gen_te,
-                                          epochs=1,
+                                          epochs=10,
                                           verbose=1,
                                           workers=1,
-                                          steps_per_epoch=5,
-                                          validation_steps=1,
+                                          steps_per_epoch=30,
+                                          validation_steps=20,
                                           use_multiprocessing=False)
     embedding_model.save('facenet_keras.h5')

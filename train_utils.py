@@ -6,11 +6,11 @@ from collections import defaultdict
 from keras.applications.resnet50 import preprocess_input
 
 path_base = '.\\data\\'
-path_csv = '.\\whisker.csv'
+path_csv = '.\\face.csv'
 embedding_dim = 50
 image_size = 224
-batch_size = 24
-path_train = os.path.join(path_base, 'whisker')
+batch_size = 48
+path_train = os.path.join(path_base, 'face')
 
 
 class SampleGen(object):

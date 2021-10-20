@@ -12,14 +12,19 @@ from GPSPhoto import gpsphoto
 from skimage.transform import resize
 from keras.models import load_model
 
+from config import is_whiskers
 from db_driver import insert_lion_data, match_lion, get_base64_str
 from lion_model import LionDetection, classes
-
+from train_utils import read_and_resize, augment
+from keras.applications.resnet50 import preprocess_input
 
 lion_model = LionDetection()
-keras_model_path = os.path.join('models', 'facenet_keras.h5')
-keras_model = load_model(keras_model_path)
-keras_model._make_predict_function()
+keras_whisker_model_path = os.path.join('models', 'facenet_whisker_keras.h5')
+keras_whisker_model = load_model(keras_whisker_model_path)
+keras_whisker_model._make_predict_function()
+keras_face_model_path = os.path.join('models', 'facenet_face_keras.h5')
+keras_face_model = load_model(keras_face_model_path)
+keras_face_model._make_predict_function()
 print("Model Init Done!")
 
 
@@ -61,13 +66,21 @@ def l2_normalize(x, axis=-1, epsilon=1e-10):
     return output
 
 
-def calculate_embeddings(images, batch_size=1):
-    aligned_images = prewhiten(load_and_align_images(images))
-    pd = list()
-    for start in range(0, len(aligned_images), batch_size):
-        x = aligned_images[start:start + batch_size]
-        pd.append(keras_model.predict_on_batch(x))
-    embeddings = l2_normalize(np.concatenate(pd))
+def calculate_face_embeddings(image):
+    image = read_and_resize(image)
+    image = augment(image)
+    image = preprocess_input(np.array(image))
+    image = np.array([image])
+    embeddings = keras_face_model.predict(image)
+    return embeddings
+
+
+def calculate_whisker_embeddings(image):
+    image = read_and_resize(image)
+    image = augment(image)
+    image = preprocess_input(np.array(image))
+    image = np.array([image])
+    embeddings = keras_whisker_model.predict(image)
     return embeddings
 
 
@@ -116,16 +129,16 @@ def extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, temp_imag
                         face = face.crop((xmin, ymin, xmax, ymax,))
                         face_path = os.path.join(tmp_dir, "face.jpg")
                         face.save(face_path)
-                        face_arr = cv2.imread(face_path)
-                        face_emb = calculate_embeddings([np.asarray(face_arr)], batch_size=1)
+                        # face_arr = cv2.imread(face_path)
+                        face_emb = calculate_face_embeddings(face_path)
                         face_str_embedding = [str(a) for a in list(face_emb[0])]
                         face_embedding = ','.join(face_str_embedding)
                     elif coord['class'] in [27, 28, 29, 30, 31]:
                         whisker = whisker.crop((xmin, ymin, xmax, ymax,))
                         whisker_path = os.path.join(tmp_dir, "whisker.jpg")
                         whisker.save(whisker_path)
-                        whisker_arr = cv2.imread(whisker_path)
-                        whisker_emb = calculate_embeddings([np.asarray(whisker_arr)], batch_size=1)
+                        # whisker_arr = cv2.imread(whisker_path)
+                        whisker_emb = calculate_whisker_embeddings(whisker_path)
                         whisker_str_embedding = [str(a) for a in list(whisker_emb[0])]
                         whisker_embedding = ','.join(whisker_str_embedding)
                     elif coord['class'] in [6, 8, 10, 12]:
@@ -315,21 +328,28 @@ def on_board_new_lion(lion, lion_dir, rv):
                 continue
             lion_path, face_path, whisker_path, lear_path, rear_path, leye_path, reye_path, nose_path, face_embedding, whisker_embedding = \
                 extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, temp_image)
-            insert_lion_data(lion_id, lion,
-                             'U', 'A',
-                             utc_click_datetime,
-                             lat, lon, lion_path,
-                             face_path, whisker_path,
-                             lear_path, rear_path,
-                             leye_path, reye_path,
-                             nose_path, face_embedding,
-                             whisker_embedding)
+            if len(whisker_embedding) > 0 and len(face_embedding) > 0:
+                insert_lion_data(lion_id, lion,
+                                 'U', 'A',
+                                 utc_click_datetime,
+                                 lat, lon, lion_path,
+                                 face_path, whisker_path,
+                                 lear_path, rear_path,
+                                 leye_path, reye_path,
+                                 nose_path, face_embedding,
+                                 whisker_embedding)
+                r = dict()
+                r['lion_name'] = lion
+                r['lion_image_file_name'] = lion_image
+                r['status'] = 'Success'
+                rv['status'].append(r)
+            else:
+                r = dict()
+                r['lion_name'] = lion
+                r['lion_image_file_name'] = lion_image
+                r['status'] = 'Either face embedding or whisker embedding is empty.'
+                rv['status'].append(r)
             shutil.rmtree(tmp_dir)
-            r = dict()
-            r['lion_name'] = lion
-            r['lion_image_file_name'] = lion_image
-            r['status'] = 'Success'
-            rv['status'].append(r)
         except Exception as e:
             if tmp_dir and os.path.exists(tmp_dir):
                 shutil.rmtree(tmp_dir)
