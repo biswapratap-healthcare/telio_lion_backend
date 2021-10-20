@@ -329,25 +329,34 @@ def on_board_new_lion(lion, lion_dir, rv):
             lion_path, face_path, whisker_path, lear_path, rear_path, leye_path, reye_path, nose_path, face_embedding, whisker_embedding = \
                 extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, temp_image)
             if len(whisker_embedding) > 0 and len(face_embedding) > 0:
-                insert_lion_data(lion_id, lion,
-                                 'U', 'A',
-                                 utc_click_datetime,
-                                 lat, lon, lion_path,
-                                 face_path, whisker_path,
-                                 lear_path, rear_path,
-                                 leye_path, reye_path,
-                                 nose_path, face_embedding,
-                                 whisker_embedding)
-                r = dict()
-                r['lion_name'] = lion
-                r['lion_image_file_name'] = lion_image
-                r['status'] = 'Success'
-                rv['status'].append(r)
+                ret = dict()
+                match_lion(face_embedding, whisker_embedding, ret)
+                if ret['type'] == 'Not':
+                    r = dict()
+                    r['lion_name'] = lion
+                    r['lion_image_file_name'] = lion_image
+                    r['status'] = 'Not a lion'
+                    rv['status'].append(r)
+                else:
+                    insert_lion_data(lion_id, lion,
+                                     'U', 'A',
+                                     utc_click_datetime,
+                                     lat, lon, lion_path,
+                                     face_path, whisker_path,
+                                     lear_path, rear_path,
+                                     leye_path, reye_path,
+                                     nose_path, face_embedding,
+                                     whisker_embedding)
+                    r = dict()
+                    r['lion_name'] = lion
+                    r['lion_image_file_name'] = lion_image
+                    r['status'] = 'Success'
+                    rv['status'].append(r)
             else:
                 r = dict()
                 r['lion_name'] = lion
                 r['lion_image_file_name'] = lion_image
-                r['status'] = 'Either face embedding or whisker embedding is empty.'
+                r['status'] = 'Either face or whisker is not detected (may be not a lion or unclear image)'
                 rv['status'].append(r)
             shutil.rmtree(tmp_dir)
         except Exception as e:
