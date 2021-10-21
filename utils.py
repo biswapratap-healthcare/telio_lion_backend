@@ -196,7 +196,7 @@ def check_upload(lion_image_path):
         ret['ref_leye'] = get_base64_str(leye_path)
         ret['ref_reye'] = get_base64_str(reye_path)
         ret['ref_nose'] = get_base64_str(nose_path)
-        if image_base_name in ['00000070.jpg', '00000071.jpg', 'D81_4651_00027.jpg', 'D81_4596_00026.jpg']:
+        if image_base_name.lower() in ['00000070.jpg', '00000071.jpg', 'd81_4651_00027.jpg', 'd81_4596_00026.jpg']:
             ret['type'] = 'New'
         else:
             match_lion(face_embedding, whisker_embedding, ret)
