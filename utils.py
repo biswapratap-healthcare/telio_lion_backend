@@ -297,6 +297,7 @@ def upload_one_lion(lion_image_path, lion_name):
 def on_board_new_lion(lion, lion_dir, rv):
     tmp_dir = None
     lion_images = os.listdir(lion_dir)
+    embeddings = get_all_lion_embeddings()
     for lion_image in lion_images:
         try:
             lat = f"{0.0}° {0.0}' {0.0}\""
@@ -337,7 +338,6 @@ def on_board_new_lion(lion, lion_dir, rv):
                 extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, temp_image)
             if len(whisker_embedding) > 0 and len(face_embedding) > 0:
                 ret = dict()
-                embeddings = get_all_lion_embeddings()
                 if len(embeddings) > 0:
                     match_lion(face_embedding, whisker_embedding, ret)
                     if ret['type'] == 'Not':
