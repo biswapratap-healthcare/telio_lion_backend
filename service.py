@@ -541,7 +541,7 @@ def create_app():
                     zip_handle = zipfile.ZipFile(file_path_or_status, "r")
                     zip_handle.extractall(path=extract_dir)
                     zip_handle.close()
-                    _payload_dir = os.path.join(extract_dir, 'check_payload')
+                    _payload_dir = os.path.join(extract_dir, 'images')
                     _lion_images = os.listdir(_payload_dir)
                     rv = dict()
                     rv['status'] = []
@@ -602,7 +602,7 @@ def create_app():
                     zip_handle = zipfile.ZipFile(file_path_or_status, "r")
                     zip_handle.extractall(path=extract_dir)
                     zip_handle.close()
-                    _payload_dir = os.path.join(extract_dir, 'onboard_payload')
+                    _payload_dir = os.path.join(extract_dir, 'lions')
                     _lions = os.listdir(_payload_dir)
                     rv = dict()
                     rv['status'] = []
