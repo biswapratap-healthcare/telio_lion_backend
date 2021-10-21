@@ -12,8 +12,7 @@ from GPSPhoto import gpsphoto
 from skimage.transform import resize
 from keras.models import load_model
 
-from config import is_whiskers
-from db_driver import insert_lion_data, match_lion, get_base64_str, get_all_lion_embeddings
+from db_driver import insert_lion_data, match_lion, get_base64_str
 from lion_model import LionDetection, classes
 from train_utils import read_and_resize, augment
 from keras.applications.resnet50 import preprocess_input
@@ -294,10 +293,9 @@ def upload_one_lion(lion_image_path, lion_name):
         return r
 
 
-def on_board_new_lion(lion, lion_dir, rv):
+def on_board_new_lion(lion, lion_dir, rv, second):
     tmp_dir = None
     lion_images = os.listdir(lion_dir)
-    embeddings = get_all_lion_embeddings()
     for lion_image in lion_images:
         try:
             lat = f"{0.0}° {0.0}' {0.0}\""
@@ -338,7 +336,7 @@ def on_board_new_lion(lion, lion_dir, rv):
                 extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, temp_image)
             if len(whisker_embedding) > 0 and len(face_embedding) > 0:
                 ret = dict()
-                if len(embeddings) > 0:
+                if second:
                     match_lion(face_embedding, whisker_embedding, ret)
                     if ret['type'] == 'Not':
                         r = dict()

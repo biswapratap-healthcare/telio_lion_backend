@@ -14,7 +14,7 @@ from werkzeug.datastructures import FileStorage
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
     create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info, get_data, \
     update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id, get_current_count, \
-    get_all_lions, get_lion_parameter, get_user_info, admin_reset_password
+    get_all_lions, get_lion_parameter, get_user_info, admin_reset_password, get_all_lion_embeddings
 from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
 
 
@@ -606,9 +606,14 @@ def create_app():
                     _lions = os.listdir(_payload_dir)
                     rv = dict()
                     rv['status'] = []
+                    embeddings = get_all_lion_embeddings()
+                    if len(embeddings) > 0:
+                        second = True
+                    else:
+                        second = False
                     for _lion in _lions:
                         _lion_dir = os.path.join(_payload_dir, _lion)
-                        on_board_new_lion(_lion, _lion_dir, rv)
+                        on_board_new_lion(_lion, _lion_dir, rv, second)
                     if extract_dir:
                         shutil.rmtree(extract_dir)
                     if download_dir:
