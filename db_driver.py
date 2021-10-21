@@ -561,7 +561,7 @@ def match_lion(face_embedding, whisker_embedding, ret):
     if len(match_data) > 0:
         _1st_match = match_data[0]
         d_1st = _1st_match[index]
-        if d_1st < 0.20 and d_1st != 0:
+        if d_1st < 0.20:
             ret['type'] = 'Similar'
             ret['similar'] = [{'id': _1st_match[0], 'name': _1st_match[1]}]
         elif d_1st > 0.20 and d_1st < 0.25:
@@ -573,12 +573,12 @@ def match_lion(face_embedding, whisker_embedding, ret):
     if len(match_data) > 1:
         _2nd_match = match_data[1]
         d_2nd = _2nd_match[index]
-        if d_2nd < 0.20 and d_2nd != 0:
+        if d_2nd < 0.20:
             ret['similar'].append({'id': _2nd_match[0], 'name': _2nd_match[1]})
     if len(match_data) > 2:
         _3rd_match = match_data[2]
         d_3rd = _3rd_match[index]
-        if d_3rd < 0.20 and d_3rd != 0:
+        if d_3rd < 0.20:
             ret['similar'].append({'id': _3rd_match[0], 'name': _3rd_match[1]})
     return ret
 

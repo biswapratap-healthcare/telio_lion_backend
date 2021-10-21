@@ -174,6 +174,7 @@ def check_upload(lion_image_path):
     tmp_dir = None
     try:
         image_base_name = os.path.basename(lion_image_path)
+        print(image_base_name)
         tmp_dir = tempfile.mkdtemp()
         pil_img = Image.open(lion_image_path)
         src = cv2.imread(lion_image_path)
