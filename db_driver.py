@@ -556,6 +556,8 @@ def match_lion(face_embedding, whisker_embedding, ret):
     else:
         match_data.sort(key=lambda x1: x1[index])
 
+    print(match_data)
+
     if len(match_data) > 0:
         _1st_match = match_data[0]
         d_1st = _1st_match[index]
