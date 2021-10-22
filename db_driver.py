@@ -85,7 +85,8 @@ def get_current_count():
     alive_lions = 0
     dead_lions = 0
     conn = None
-    sql = "SELECT sex, status FROM lion_data;"
+    sql = "select sex, status from (select sex, status, row_number() over " \
+          "(partition by name order by name asc) as row_number from lion_data) temp where row_number=1;"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
