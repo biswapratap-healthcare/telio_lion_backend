@@ -21,7 +21,7 @@ def triplet_loss(inputs, dist='sqeuclidean', margin='maxplus'):
         negative_distance = k.sum(negative_distance, axis=-1, keepdims=True)
     loss = positive_distance - negative_distance
     if margin == 'maxplus':
-        loss = k.maximum(0.0, 1 + loss)
+        loss = k.maximum(0.0, 2 + loss)
     elif margin == 'softplus':
         loss = k.log(1 + k.exp(loss))
     return k.mean(loss)

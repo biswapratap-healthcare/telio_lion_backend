@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 from GPSPhoto import gpsphoto
 
+import tensorflow as tf
 from skimage.transform import resize
 from keras.models import load_model
 
@@ -24,6 +25,9 @@ keras_whisker_model._make_predict_function()
 keras_face_model_path = os.path.join('models', 'facenet_face_keras.h5')
 keras_face_model = load_model(keras_face_model_path)
 keras_face_model._make_predict_function()
+new_lion_model_path = os.path.join('models', 'new_lion_model.h5')
+new_lion_model = tf.keras.models.load_model(new_lion_model_path)
+new_lion_model._make_predict_function()
 print("Model Init Done!")
 
 
@@ -169,6 +173,15 @@ def extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, temp_imag
            face_embedding, whisker_embedding
 
 
+def predict_not_a_lion(filename):
+    from tensorflow.keras.preprocessing import image
+    img1 = image.load_img(filename, target_size=(150, 150))
+    Y = image.img_to_array(img1)
+    X = np.expand_dims(Y, axis=0)
+    val = new_lion_model.predict(X)
+    return val
+
+
 def check_upload(lion_image_path):
     tmp_dir = None
     try:
@@ -195,10 +208,13 @@ def check_upload(lion_image_path):
         ret['ref_leye'] = get_base64_str(leye_path)
         ret['ref_reye'] = get_base64_str(reye_path)
         ret['ref_nose'] = get_base64_str(nose_path)
-        if image_base_name.lower() in ['nd1_8973_00046.jpg', 'photo-1610435796163-ee4c54fd98ec.jfif']:
+        # if image_base_name.lower() in ['nd1_8973_00046.jpg', 'photo-1610435796163-ee4c54fd98ec.jfif']:
+        #     ret['type'] = 'Not'
+        # elif image_base_name.lower() in ['00000070.jpg', '00000071.jpg', 'd81_4651_00027.jpg', 'd81_4596_00026.jpg']:
+        #     ret['type'] = 'New'
+        # else:
+        if predict_not_a_lion(lion_image_path):
             ret['type'] = 'Not'
-        elif image_base_name.lower() in ['00000070.jpg', '00000071.jpg', 'd81_4651_00027.jpg', 'd81_4596_00026.jpg']:
-            ret['type'] = 'New'
         else:
             match_lion(face_embedding, whisker_embedding, ret)
         return ret
