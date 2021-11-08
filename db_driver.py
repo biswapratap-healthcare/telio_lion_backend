@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 import psycopg2
 
-from config import is_whiskers
+from config import is_whiskers, threshold
 from train_utils import embedding_dim
 
 handle = "localhost"
@@ -499,6 +499,7 @@ def get_all_lion_embeddings():
 
 
 def match_lion(face_embedding, whisker_embedding, ret):
+    ret['threshold'] = threshold
     match_data = list()
     embeddings = get_all_lion_embeddings()
     if len(face_embedding) == 0:
@@ -521,6 +522,7 @@ def match_lion(face_embedding, whisker_embedding, ret):
             except Exception as e:
                 print(x)
                 whisker_emb.append(float('0.0'))
+    no_face_or_whisker = 1
     for embedding in embeddings:
         ref_id = embedding[0]
         ref_lion_name = embedding[1]
@@ -545,6 +547,7 @@ def match_lion(face_embedding, whisker_embedding, ret):
         else:
             d = whisker_distance
         if d != 0:
+            no_face_or_whisker = 0
             match_data.append((ref_id, ref_lion_name, face_distance, whisker_distance))
 
     if is_whiskers:
@@ -553,8 +556,12 @@ def match_lion(face_embedding, whisker_embedding, ret):
         index = 2
 
     if len(match_data) == 0:
-        ret['type'] = 'New'
-        ret['distance'] = 0.20
+        if no_face_or_whisker:
+            ret['type'] = 'Unknown'
+            ret['distance'] = 1.00
+        else:
+            ret['type'] = 'New'
+            ret['distance'] = threshold
     else:
         match_data.sort(key=lambda x1: x1[index])
 
@@ -563,29 +570,23 @@ def match_lion(face_embedding, whisker_embedding, ret):
     if len(match_data) > 0:
         _1st_match = match_data[0]
         d_1st = _1st_match[index]
-        if d_1st < 0.20:
+        if d_1st < threshold:
             ret['type'] = 'Similar'
             ret['similar'] = [{'id': _1st_match[0], 'name': _1st_match[1]}]
             ret['distance'] = round(d_1st, 2)
-        elif d_1st > 0.20 and d_1st < 0.25:
-            ret['type'] = 'New'
-            ret['distance'] = round(d_1st, 2)
-        elif d_1st > 0.25:
-            ret['type'] = 'Not'
-            ret['distance'] = round(d_1st, 2)
         else:
-            ret['type'] = 'Not'
+            ret['type'] = 'New'
             ret['distance'] = round(d_1st, 2)
     if len(match_data) > 1:
         _2nd_match = match_data[1]
         d_2nd = _2nd_match[index]
-        if d_2nd < 0.20:
+        if d_2nd < threshold:
             ret['similar'].append({'id': _2nd_match[0], 'name': _2nd_match[1]})
             ret['distance'] = round(d_2nd, 2)
     if len(match_data) > 2:
         _3rd_match = match_data[2]
         d_3rd = _3rd_match[index]
-        if d_3rd < 0.20:
+        if d_3rd < threshold:
             ret['similar'].append({'id': _3rd_match[0], 'name': _3rd_match[1]})
             ret['distance'] = round(d_3rd, 2)
     return ret
