@@ -96,6 +96,40 @@ def create_app():
                 rv['status'] = str(e)
                 return rv, 404
 
+    adjust_threshold_parser = reqparse.RequestParser()
+    adjust_threshold_parser.add_argument('sign',
+                                         type=str,
+                                         help='The sign of delta change in threshold.',
+                                         required=True)
+    adjust_threshold_parser.add_argument('delta',
+                                         type=str,
+                                         help='The delta change in threshold.',
+                                         required=True)
+
+    @api.route('/adjust_threshold')
+    @api.expect(adjust_threshold_parser)
+    class AdjustThresholdService(Resource):
+        @api.expect(adjust_threshold_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = adjust_threshold_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            try:
+                delta_str = args['delta']
+                sign_str = args['sign']
+                threshold.set_threshold(sign_str, delta_str)
+                rv = dict()
+                rv['status'] = 'Success'
+                return rv, 200
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
     upload_parser = reqparse.RequestParser()
     upload_parser.add_argument('instance_file',
                                location='files',
@@ -110,14 +144,6 @@ def create_app():
                                type=str,
                                help='The id of the lion image which is similar to (optional).',
                                required=False)
-    upload_parser.add_argument('sign',
-                               type=str,
-                               help='The sign of delta change in threshold.',
-                               required=True)
-    upload_parser.add_argument('delta',
-                               type=str,
-                               help='The delta change in threshold.',
-                               required=True)
 
     @api.route('/upload')
     @api.expect(upload_parser)
@@ -132,9 +158,6 @@ def create_app():
                 rv['status'] = str(e)
                 return rv, 404
             try:
-                delta_str = args['delta']
-                sign_str = args['sign']
-                threshold.set_threshold(sign_str, delta_str)
                 temp_dir = tempfile.mkdtemp()
                 file_from_request = args['instance_file']
                 ret, status_file_path = store_and_verify_file(file_from_request, temp_dir)
