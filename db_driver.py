@@ -499,7 +499,7 @@ def get_all_lion_embeddings():
 
 
 def match_lion(face_embedding, whisker_embedding, ret):
-    ret['threshold'] = threshold
+    ret['threshold'] = threshold.get_threshold()
     match_data = list()
     embeddings = get_all_lion_embeddings()
     if len(face_embedding) == 0:
@@ -561,7 +561,7 @@ def match_lion(face_embedding, whisker_embedding, ret):
             ret['distance'] = 1.00
         else:
             ret['type'] = 'New'
-            ret['distance'] = threshold
+            ret['distance'] = threshold.get_threshold()
     else:
         match_data.sort(key=lambda x1: x1[index])
 
@@ -570,7 +570,7 @@ def match_lion(face_embedding, whisker_embedding, ret):
     if len(match_data) > 0:
         _1st_match = match_data[0]
         d_1st = _1st_match[index]
-        if d_1st < threshold:
+        if d_1st <= threshold.get_threshold():
             ret['type'] = 'Similar'
             ret['similar'] = [{'id': _1st_match[0], 'name': _1st_match[1]}]
             ret['distance'] = round(d_1st, 2)
@@ -580,13 +580,13 @@ def match_lion(face_embedding, whisker_embedding, ret):
     if len(match_data) > 1:
         _2nd_match = match_data[1]
         d_2nd = _2nd_match[index]
-        if d_2nd < threshold:
+        if d_2nd <= threshold.get_threshold():
             ret['similar'].append({'id': _2nd_match[0], 'name': _2nd_match[1]})
             ret['distance'] = round(d_2nd, 2)
     if len(match_data) > 2:
         _3rd_match = match_data[2]
         d_3rd = _3rd_match[index]
-        if d_3rd < threshold:
+        if d_3rd <= threshold.get_threshold():
             ret['similar'].append({'id': _3rd_match[0], 'name': _3rd_match[1]})
             ret['distance'] = round(d_3rd, 2)
     return ret

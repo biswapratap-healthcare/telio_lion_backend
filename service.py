@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 from flask_restplus import Resource, Api, reqparse
 from werkzeug.datastructures import FileStorage
 
+from config import threshold
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
     create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info, get_data, \
     update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id, get_current_count, \
@@ -109,6 +110,14 @@ def create_app():
                                type=str,
                                help='The id of the lion image which is similar to (optional).',
                                required=False)
+    upload_parser.add_argument('sign',
+                               type=str,
+                               help='The sign of delta change in threshold.',
+                               required=True)
+    upload_parser.add_argument('delta',
+                               type=str,
+                               help='The delta change in threshold.',
+                               required=True)
 
     @api.route('/upload')
     @api.expect(upload_parser)
@@ -123,6 +132,9 @@ def create_app():
                 rv['status'] = str(e)
                 return rv, 404
             try:
+                delta_str = args['delta']
+                sign_str = args['sign']
+                threshold.set_threshold(sign_str, delta_str)
                 temp_dir = tempfile.mkdtemp()
                 file_from_request = args['instance_file']
                 ret, status_file_path = store_and_verify_file(file_from_request, temp_dir)
