@@ -170,12 +170,19 @@ def extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, temp_imag
            face_embedding, whisker_embedding
 
 
+def resize(img):
+    new_img = Image.open(img)
+    resized_img = new_img.resize((225, 225), Image.ANTIALIAS, quality=75)
+    return resized_img
+
+
 def predict_not_a_lion(filename):
     from keras.preprocessing import image
+    # img = resize(filename)
     img = image.load_img(filename, target_size=(224, 224))
     img = np.asarray(img)
     img = np.expand_dims(img, axis=0)
-    saved_model = tf.keras.models.load_model('models/vgg.h5')
+    saved_model = tf.keras.models.load_model('models/vgg16.h5')
     output = saved_model.predict(img)
     ret = output[0][0]
     return ret
@@ -207,10 +214,10 @@ def check_upload(lion_image_path):
         ret['ref_leye'] = get_base64_str(leye_path)
         ret['ref_reye'] = get_base64_str(reye_path)
         ret['ref_nose'] = get_base64_str(nose_path)
-        # if predict_not_a_lion(lion_image_path):
-        #     ret['type'] = 'Not'
-        # else:
-        match_lion(face_embedding, whisker_embedding, ret)
+        if len(ret['ref_face']) == 0 or predict_not_a_lion(face_path):
+            ret['type'] = 'Not'
+        else:
+            match_lion(face_embedding, whisker_embedding, ret)
         return ret
     except Exception as e:
         if tmp_dir and os.path.exists(tmp_dir):

@@ -122,6 +122,8 @@ def create_app():
                 delta_str = args['delta']
                 sign_str = args['sign']
                 threshold.set_threshold(sign_str, delta_str)
+                print("sign = " + sign_str)
+                print("delta = " + delta_str)
                 rv = dict()
                 rv['status'] = 'Success'
                 return rv, 200
