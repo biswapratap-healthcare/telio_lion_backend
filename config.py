@@ -21,6 +21,8 @@ class Threshold:
             self.threshold = round(self.threshold + delta, 2)
         else:
             self.threshold = round(self.threshold - delta, 2)
+        if self.threshold < 0.10:
+            self.threshold = 0.10
         with open('threshold.config', 'w') as f:
             f.write(str(self.threshold))
 
