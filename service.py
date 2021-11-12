@@ -15,7 +15,8 @@ from config import threshold
 from db_driver import login, create_new_user, modify_password, if_table_exists, create_lion_data_table, \
     create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info, get_data, \
     update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id, get_current_count, \
-    get_all_lions, get_lion_parameter, get_user_info, admin_reset_password, get_all_lion_embeddings
+    get_all_lions, get_lion_parameter, get_user_info, admin_reset_password, get_all_lion_embeddings, \
+    get_lion_gender_info, get_lion_status_info
 from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
 
 
@@ -917,6 +918,78 @@ def create_app():
                     return rv, 200
                 else:
                     return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    search_parser = reqparse.RequestParser()
+
+    search_parser.add_argument('lion_id',
+                               type=str,
+                               help='The lion id',
+                               required=False)
+    search_parser.add_argument('lion_name',
+                               type=str,
+                               help='The lion name',
+                               required=False)
+
+    search_parser.add_argument('lion_gender',
+                               type=str,
+                               help='The lion gender',
+                               required=False)
+    search_parser.add_argument('lion_status',
+                               type=str,
+                               help='The lion status ',
+                               required=False)
+
+    @api.route('/SearchByFilter')
+    @api.expect(search_parser)
+    class Search_byfilter(Resource):
+        @api.expect(search_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = search_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+            try:
+                if args['lion_id']:
+                    _id = args['lion_id']
+                    rv, ret = get_lion_id_info(_id)
+                    if ret == 0:
+                        return rv, 200
+                    else:
+                        return rv, 404
+
+                elif args['lion_name']:
+                    _name = args['lion_name']
+                    rv, ret = get_lion_name_info(_name)
+                    if ret == 0:
+                        return rv, 200
+                    else:
+                        return rv, 404
+
+                elif args['lion_gender']:
+                    _gender = args['lion_gender']
+                    rv, ret = get_lion_gender_info(_gender)
+                    if ret == 0:
+                        return rv, 200
+                    else:
+                        return rv, 404
+
+                elif args['lion_status']:
+                    _status = args['lion_status']
+                    rv ,ret = get_lion_status_info(_status)
+                    if ret == 0:
+                        return rv, 200
+                    else:
+                        return rv, 400
+
+
             except Exception as e:
                 rv = dict()
                 rv['status'] = str(e)

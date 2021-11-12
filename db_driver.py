@@ -476,6 +476,96 @@ def get_lion_name_info(lion_name):
         return rv, ret
 
 
+
+def get_lion_gender_info(lion_gender):
+    rv = dict()
+    ret = 0
+    conn = None
+    sql = "SELECT id, name, sex, status, click_date, upload_date, latitude, longitude, " \
+          "face, whisker, l_ear, r_ear, l_eye, r_eye, nose FROM lion_data WHERE sex = %s;"
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql, (lion_gender,))
+        records = cur.fetchall()
+        lions_instances = list()
+        for record in records:
+            one_record = dict()
+            one_record['id'] = record[0]
+            one_record['name'] = record[1]
+            one_record['sex'] = record[2]
+            one_record['status'] = record[3]
+            one_record['click_date'] = str(record[4])
+            one_record['upload_date'] = str(record[5])
+            one_record['latitude'] = record[6]
+            one_record['longitude'] = record[7]
+            # one_record['image'] = record[8]
+            one_record['face'] = record[8]
+            one_record['whisker'] = record[9]
+            one_record['l_ear'] = record[10]
+            one_record['r_ear'] = record[11]
+            one_record['l_eye'] = record[12]
+            one_record['r_eye'] = record[13]
+            one_record['nose'] = record[14]
+            lions_instances.append(one_record)
+        rv['lions_instances'] = lions_instances
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return rv, ret
+
+
+def get_lion_status_info(lion_status):
+    rv = dict()
+    ret = 0
+    conn = None
+    sql = "SELECT id, name, sex, status, click_date, upload_date, latitude, longitude, " \
+          "face, whisker, l_ear, r_ear, l_eye, r_eye, nose FROM lion_data WHERE status = %s;"
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql, (lion_status,))
+        records = cur.fetchall()
+        lions_instances = list()
+        for record in records:
+            one_record = dict()
+            one_record['id'] = record[0]
+            one_record['name'] = record[1]
+            one_record['sex'] = record[2]
+            one_record['status'] = record[3]
+            one_record['click_date'] = str(record[4])
+            one_record['upload_date'] = str(record[5])
+            one_record['latitude'] = record[6]
+            one_record['longitude'] = record[7]
+            # one_record['image'] = record[8]
+            one_record['face'] = record[8]
+            one_record['whisker'] = record[9]
+            one_record['l_ear'] = record[10]
+            one_record['r_ear'] = record[11]
+            one_record['l_eye'] = record[12]
+            one_record['r_eye'] = record[13]
+            one_record['nose'] = record[14]
+            lions_instances.append(one_record)
+        rv['lions_instances'] = lions_instances
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return rv, ret
+
 def get_all_lion_embeddings():
     ret = list()
     conn = None
