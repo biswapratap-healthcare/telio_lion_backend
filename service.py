@@ -18,7 +18,7 @@ from db_driver import login, create_new_user, modify_password, if_table_exists, 
     get_all_lions, get_lion_parameter, get_user_info, admin_reset_password, get_all_lion_embeddings, \
     get_lion_gender_info, get_lion_status_info
 from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
-
+from compressed_Table import get_all_compressed_lions
 
 def store_and_verify_file(file_from_request, work_dir):
     if not file_from_request.filename:
@@ -43,6 +43,8 @@ def upload_and_verify_file(file_from_request, work_dir):
         return 0, file_path, fn
     except Exception as ex:
         return -1, str(ex), None
+
+
 
 
 def init():
@@ -72,7 +74,8 @@ def create_app():
         @api.doc(responses={"response": 'json'})
         def get(self):
             try:
-                ret, r = get_all_lions()
+                #ret, r = get_all_lions()
+                ret,r = get_all_compressed_lions()
                 if r == 0:
                     return ret, 200
                 else:
@@ -1018,6 +1021,8 @@ def create_app():
             return rv, 200
 
     return app
+
+
 
 
 if __name__ == "__main__":
