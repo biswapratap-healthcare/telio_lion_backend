@@ -15,6 +15,7 @@ handle = "localhost"
 database = "telio_lions"
 
 
+
 def get_base64_str(image):
     try:
         with open(image, "rb") as imageFile:
@@ -51,7 +52,7 @@ def get_all_lions():
         cur.close()
         df = pd.DataFrame(records, columns=['name', 'sex', 'status', 'click_date',
                                             'upload_date', 'latitude', 'longitude', 'face'])
-        df = df.groupby(['name'])['sex', 'status', 'click_date', 'upload_date', 'latitude', 'longitude', 'face'].\
+        df = df.groupby(['name'])['sex', 'status', 'click_date', 'upload_date', 'latitude', 'longitude', 'face']. \
             apply(lambda x: aggregate(x)).reset_index()
         lions = list()
         for index, row in df.iterrows():
@@ -413,7 +414,7 @@ def get_lion_id_info(lion_id):
             rv['upload_date'] = str(record[5])
             rv['latitude'] = record[6]
             rv['longitude'] = record[7]
-            # rv['image'] = record[8]
+            #rv['image'] = record[8]
             rv['face'] = record[8]
             rv['whisker'] = record[9]
             rv['l_ear'] = record[10]
@@ -691,7 +692,7 @@ def insert_lion_data(_id, name,
                      rear, leye,
                      reye, nose,
                      face_embedding,
-                     whisker_embedding):
+                     whisker_embedding,hash_value):
     ret = 0
     status = "Success"
     conn = None
@@ -731,7 +732,13 @@ def insert_lion_data(_id, name,
             nose_bytes = ''
             pass
 
-        sql = """INSERT INTO lion_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
+        try:
+            str_hash_value = str(hash_value)
+        except Exception as e:
+            str_hash_value = ''
+            pass
+
+        sql = """INSERT INTO lion_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
         conn = psycopg2.connect(host=handle,
                                 database=database,
                                 user="postgres",
@@ -754,7 +761,7 @@ def insert_lion_data(_id, name,
                           reye_bytes,
                           nose_bytes,
                           face_embedding,
-                          whisker_embedding))
+                          whisker_embedding,str_hash_value))
         _id = cur.fetchone()[0]
         if _id:
             conn.commit()
@@ -867,7 +874,8 @@ def create_lion_data_table():
           "r_eye text, " \
           "nose text, " \
           "face_embedding text, " \
-          "whisker_embedding text);"
+          "whisker_embedding text, " \
+          "hash_value text);"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -957,6 +965,7 @@ def login(un, pwd):
     role = ''
     conn = None
     sql = """select password from user_data where username = %s"""
+    # sql = "update password from user_data where username = %s"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
