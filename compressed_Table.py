@@ -16,6 +16,44 @@ handle = "34.93.181.52"
 database = "telio_lions"
 
 
+def get_all_compressed_faces():
+    ret = 0
+    conn = None
+    rv = dict()
+    sql = "SELECT name,face FROM compressed_images;"
+    try :
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+
+        cur = conn.cursor()
+        cur.execute(sql)
+        records = cur.fetchall()
+        for record in records:
+            record = records[0]
+            rv['name'] = record[0]
+            rv['face'] = record[1]
+        cur.close()
+
+        # df = pd.DataFrame(records, columns=['name', 'face'])
+        # df = df.groupby(['name'])['face'].apply(lambda x: aggregate(x)).reset_index()
+        # lions = list()
+        # for index, row in df.iteritems():
+        #     info = dict()
+        #     info['name'] = row['name']
+        #     info['face'] = row['face']
+        #     lions.append(info)
+        # rv['lions'] = lions
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        rv = dict()
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return rv, ret
+
 
 def get_all_compressed_lions():
     ret = 0
@@ -59,6 +97,8 @@ def get_all_compressed_lions():
         if conn is not None:
             conn.close()
         return rv, ret
+
+
 # string_return
 def get_base64_str(image):
     try:

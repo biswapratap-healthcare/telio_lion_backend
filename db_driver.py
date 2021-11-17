@@ -894,7 +894,7 @@ def create_lion_data_table():
         return ret, status
 
 
-def if_table_exists(table_name='lion_data'):
+def if_table_exists(table_name):
     ret = False
     conn = None
     sql = "SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = '" + table_name + "');"""

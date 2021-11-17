@@ -256,31 +256,75 @@ def upload_one_lion(lion_image_path, lion_name):
         utc_click_datetime = datetime.now(timezone.utc)
         lion_id = str(current_milli_time())
         data = gpsphoto.getGPSData(lion_image_path)
-        if len(data) > 0:
-            try:
-                lat_deg, lat_mnt, lat_sec = dd2dms(data['Latitude'])
-                lat = f"{lat_deg}° {lat_mnt}' {lat_sec}\""
-            except Exception as e:
-                lat = f"{0.0}° {0.0}' {0.0}\""
-            try:
-                lon_deg, lon_mnt, lon_sec = dd2dms(data['Longitude'])
-                lon = f"{lon_deg}° {lon_mnt}' {lon_sec}\""
-            except Exception as e:
-                lon = f"{0.0}° {0.0}' {0.0}\""
-            try:
-                utc_click_datetime = get_click_datetime(data)
-            except Exception as e:
-                utc_click_datetime = datetime.now(timezone.utc)
-        pil_img = Image.open(lion_image_path)
-        src = cv2.imread(lion_image_path)
-        temp_image = src.copy()
-        coordinates, whisker_cords, face_cords, status = lion_model.get_coordinates(lion_image_path, lion_name)
-        if status != "Success":
+        hash_value = img_hash_value(lion_image_path)
+        print(hash_value)
+        # duplicated image detection
+        str_hash_value = str(hash_value)
+        dup_val, status = duplicate_img_detected(str_hash_value)
+        if dup_val == 1:
             print(status)
             r = dict()
             r['lion_name'] = lion_name
-            r['lion_image_file_name'] = os.path.basename(lion_image_path)
+            r['lion_image_file_name'] = lion_image
             r['status'] = status
+            return r
+        else:
+            if len(data) > 0:
+                try:
+                    lat_deg, lat_mnt, lat_sec = dd2dms(data['Latitude'])
+                    lat = f"{lat_deg}° {lat_mnt}' {lat_sec}\""
+                except Exception as e:
+                    lat = f"{0.0}° {0.0}' {0.0}\""
+                try:
+                    lon_deg, lon_mnt, lon_sec = dd2dms(data['Longitude'])
+                    lon = f"{lon_deg}° {lon_mnt}' {lon_sec}\""
+                except Exception as e:
+                    lon = f"{0.0}° {0.0}' {0.0}\""
+                try:
+                    utc_click_datetime = get_click_datetime(data)
+                except Exception as e:
+                    utc_click_datetime = datetime.now(timezone.utc)
+            pil_img = Image.open(lion_image_path)
+            src = cv2.imread(lion_image_path)
+            temp_image = src.copy()
+            coordinates, whisker_cords, face_cords, status = lion_model.get_coordinates(lion_image_path, lion)
+
+            # for compressed_data
+            resize_temp_image = cv2.resize(src, (30, 30), interpolation=cv2.INTER_NEAREST)
+            c_lion_path, c_face_path, c_whisker_path, c_lear_path, c_rear_path, c_leye_path, c_reye_path, c_nose_path, c_face_embedding, c_whisker_embedding = \
+                extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, resize_temp_image)
+            insert_compressed_data(lion_id, lion, c_lion_path,
+                                   c_face_path, c_whisker_path,
+                                   c_lear_path, c_rear_path,
+                                   c_leye_path, c_reye_path,
+                                   c_nose_path)
+
+            if status != "Success":
+                print(status)
+                r = dict()
+                r['lion_name'] = lion_name
+                r['lion_image_file_name'] = os.path.basename(lion_image_path)
+                r['status'] = status
+                return r
+
+            lion_path, face_path, whisker_path, lear_path, rear_path, leye_path, reye_path, nose_path, face_embedding, whisker_embedding = \
+                extract_lion_data(face_cords, lion_name, pil_img, coordinates, tmp_dir, temp_image, hash_value)
+            insert_lion_data(lion_id, lion_name,
+                             'U', 'A',
+                             utc_click_datetime,
+                             lat, lon, lion_path,
+                             face_path, whisker_path,
+                             lear_path, rear_path,
+                             leye_path, reye_path,
+                             nose_path, face_embedding,
+                             whisker_embedding)
+            # face_bytes = get_base64_str(face_path)
+            shutil.rmtree(tmp_dir)
+            r = dict()
+            r['lion_name'] = lion_name
+            r['lion_image_file_name'] = os.path.basename(lion_image_path)
+            # r['image'] = face_bytes
+            r['status'] = 'Success'
             return r
 
 

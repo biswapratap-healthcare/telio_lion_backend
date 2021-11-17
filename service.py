@@ -18,7 +18,7 @@ from db_driver import login, create_new_user, modify_password, if_table_exists, 
     get_all_lions, get_lion_parameter, get_user_info, admin_reset_password, get_all_lion_embeddings, \
     get_lion_gender_info, get_lion_status_info
 from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
-from compressed_Table import get_all_compressed_lions
+from compressed_Table import get_all_compressed_lions , create_compressed_table , get_all_compressed_faces
 
 def store_and_verify_file(file_from_request, work_dir):
     if not file_from_request.filename:
@@ -52,6 +52,9 @@ def init():
         create_user_data_table()
     if not if_table_exists(table_name='lion_data'):
         create_lion_data_table()
+    if not if_table_exists(table_name='compressed_images'):
+        create_compressed_table()
+
 
 
 def create_app():
@@ -998,6 +1001,22 @@ def create_app():
                 rv['status'] = str(e)
                 return rv, 404
 
+    @api.route('/get_all_compressed_faces')
+    class GetAllCompressedFaces(Resource):
+        @api.doc(responses={"response": 'json'})
+        def get(self):
+            try:
+                # ret, r = get_all_lions()
+                ret, r = get_all_compressed_faces()
+                if r == 0:
+                    return ret, 200
+                else:
+                    return ret, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
     health_check_parser = reqparse.RequestParser()
     health_check_parser.add_argument('var',
                                      type=int,
@@ -1019,6 +1038,7 @@ def create_app():
             rv = dict()
             rv['health'] = "good"
             return rv, 200
+
 
     return app
 
