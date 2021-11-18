@@ -10,8 +10,8 @@ import psycopg2
 from config import is_whiskers, threshold
 from train_utils import embedding_dim
 
-handle = "localhost"
-# handle = "34.93.181.52"
+# handle = "localhost"
+handle = "34.93.181.52"
 database = "telio_lions"
 
 
@@ -352,18 +352,16 @@ def get_user_info(username):
             conn.close()
         return rv, ret
 
-
-def get_data(offset, count):
+def get_data(offset, count, loggedinuser):
     rv = dict()
     ret = 0
     conn = None
-    sql = """SELECT username, name, email, phone, role FROM user_data OFFSET %s ROWS FETCH FIRST %s ROW ONLY;"""
-
+    sql = "SELECT username, name, email, phone, role FROM user_data WHERE username !='" + loggedinuser + "' ;"
     try:
         conn = psycopg2.connect(host=handle,
-                                database=database,
-                                user="postgres",
-                                password="admin")
+                                        database=database,
+                                        user="postgres",
+                                        password="admin")
         cur = conn.cursor()
         cur.execute(sql, (offset, count,))
         records = cur.fetchall()
@@ -378,14 +376,16 @@ def get_data(offset, count):
             user_instances.append(one_record)
         rv['users'] = user_instances
         cur.close()
+
     except (Exception, psycopg2.DatabaseError) as error:
-        print("DB Error: " + str(error))
-        ret = -1
-        rv = dict()
+            print("DB Error: " + str(error))
+            ret = -1
+            rv = dict()
     finally:
         if conn is not None:
             conn.close()
-        return rv, ret
+            return rv, ret
+
 
 
 def get_lion_id_info(lion_id):
@@ -949,11 +949,10 @@ def admin_reset_password(_admin_username, _admin_password, _username):
                     conn.close()
                 return ret_str, ret
 
-
 def modify_password(_un, _old_pw, _new_pw):
     ret, rr = login(_un, _old_pw)
     if ret is True:
-        ret_str, ret = update_user_parameter(_un, _old_pw, 'password', _new_pw)
+        ret_str, ret = update_user_parameter('admin',_un, _old_pw, 'password', _new_pw)
     else:
         ret_str = "Invalid existing password."
         ret = -1

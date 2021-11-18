@@ -74,8 +74,7 @@ def get_all_compressed_lions():
         cur.close()
         df = pd.DataFrame(records, columns=['name', 'sex', 'status', 'click_date',
                                             'upload_date', 'latitude', 'longitude', 'face'])
-        df = df.groupby(['name'])['sex', 'status', 'click_date', 'upload_date', 'latitude', 'longitude', 'face']. \
-            apply(lambda x: aggregate(x)).reset_index()
+        df = df.groupby(['name'])['sex', 'status', 'click_date', 'upload_date', 'latitude', 'longitude', 'face'].apply(lambda x: aggregate(x)).reset_index()
         lions = list()
         for index, row in df.iterrows():
             info = dict()

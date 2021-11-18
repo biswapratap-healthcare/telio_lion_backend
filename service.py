@@ -145,14 +145,29 @@ def create_app():
                                type=FileStorage,
                                help='The instance file to be uploaded.',
                                required=True)
-    upload_parser.add_argument('name',
+    upload_parser.add_argument('Name',
                                type=str,
-                               help='The name of the lion (optional).',
+                               help='The name of the lion.',
+                               required=True)
+    # upload_parser.add_argument('id',
+    #                            type=str,
+    #                            help='The id similar to another lion (optional).',
+    #                            required=False)
+
+    upload_parser.add_argument('Age',
+                               type=int,
+                               help='The age of the lion.',
                                required=False)
-    upload_parser.add_argument('id',
+    upload_parser.add_argument('Gender',
                                type=str,
-                               help='The id of the lion image which is similar to (optional).',
+                               help='The gender of the lion.',
                                required=False)
+    upload_parser.add_argument('Status',
+                               type=str,
+                               help='The status of the lion.',
+                               required=False)
+
+
 
     @api.route('/upload')
     @api.expect(upload_parser)
@@ -174,29 +189,36 @@ def create_app():
                     rv = dict()
                     rv['status'] = status_file_path
                     return rv, 404
+                name = args['Name']
+                # try:
+                #     age = args['Age']
+                #     if age is None:
+                #         age = ''
+                # except Exception as e:
+                #     age = ''
                 try:
-                    name = args['name']
-                    if name is None:
-                        name = ''
+                    gender = args['Gender']
+                    if gender is None:
+                        gender = ''
                 except Exception as e:
-                    name = ''
+                    gender = ''
                 try:
-                    _id = args['id']
-                    if _id is None:
-                        _id = ''
+                    status = args['Status']
+                    if gender is None:
+                        status = ''
                 except Exception as e:
-                    _id = ''
-                if len(name) == 0 and len(_id) == 0:
-                    rv = dict()
-                    rv['status'] = "both are empty"
-                    return rv, 404
-                if len(name) == 0:
-                    name, ret = get_lion_parameter(_id, 'name')
-                    if ret != 0:
-                        rv = dict()
-                        rv['status'] = "no name associated with id"
-                        return rv, 404
-                rv = upload_one_lion(status_file_path, name)
+                    status = ''
+                # if len(name) == 0 or len(_id) == 0:
+                #     rv = dict()
+                #     rv['status'] = "both are empty"
+                #     return rv, 404
+                # if len(name) == 0:
+                #     name, ret = get_lion_parameter(_id, 'name')
+                #     if ret != 0:
+                #         rv = dict()
+                #         rv['status'] = "no name associated with id"
+                #         return rv, 404
+                rv = upload_one_lion(status_file_path, name,gender,status)
                 return rv, 200
             except Exception as e:
                 rv = dict()
@@ -396,7 +418,7 @@ def create_app():
                                        type=str,
                                        help='The lion status, A - Alive or D - Dead',
                                        required=True)
-    edit_lion_data_parser.add_argument('lion_sex',
+    edit_lion_data_parser.add_argument('lion_gender',
                                        type=str,
                                        help='The lion sex, M - Male or F - Female or U - Unknown',
                                        required=True)
@@ -416,9 +438,9 @@ def create_app():
             try:
                 lion_name = args['lion_name']
                 lion_status = args['lion_status']
-                lion_sex = args['lion_sex']
+                lion_gender = args['lion_gender']
                 ret_str, ret_status = update_lion_name_parameter(lion_name, 'status', lion_status)
-                ret_str, ret_sex = update_lion_name_parameter(lion_name, 'sex', lion_sex)
+                ret_str, ret_sex = update_lion_name_parameter(lion_name, 'sex', lion_gender)
                 rv = dict()
                 rv['status'] = ret_str
                 if ret_status == 0 and ret_sex == 0:
@@ -469,6 +491,10 @@ def create_app():
                             type=int,
                             help='Number of records to be read from offset',
                             required=True)
+    get_parser.add_argument('loggedinuser',
+                            type=str,
+                            help='Name of logged-In user',
+                            required=True)
 
     @api.route('/list')
     @api.expect(get_parser)
@@ -485,7 +511,8 @@ def create_app():
             try:
                 offset = args['offset']
                 count = args['count']
-                rv, ret = get_data(offset, count)
+                loggedinuser = args['loggedinuser']
+                rv, ret = get_data(offset, count, loggedinuser)
                 if ret != 0:
                     return rv, 404
                 else:
@@ -500,7 +527,6 @@ def create_app():
                                          type=str,
                                          help='The lion id',
                                          required=True)
-
     @api.route('/get_lion_id_info')
     @api.expect(get_lion_id_info_parser)
     class GetLionIDInfoService(Resource):
