@@ -293,21 +293,11 @@ def upload_one_lion(lion_image_path, lion_name, gender, l_status):
                 except Exception as e:
                     utc_click_datetime = datetime.now(timezone.utc)
 
-            pil_img = Image.open(lion_image_path)
-            src = cv2.imread(lion_image_path)
-            temp_image = src.copy()
-            coordinates, whisker_cords, face_cords, status = lion_model.get_coordinates(lion_image_path, lion_name)
+        pil_img = Image.open(lion_image_path)
+        src = cv2.imread(lion_image_path)
+        temp_image = src.copy()
+        coordinates, whisker_cords, face_cords, status = lion_model.get_coordinates(lion_image_path, lion_name)
 
-            # for compressed_data
-            resize_temp_image = cv2.resize(src, (30, 30), interpolation=cv2.INTER_NEAREST)
-            c_lion_path, c_face_path, c_whisker_path, c_lear_path, c_rear_path, c_leye_path, c_reye_path, c_nose_path, c_face_embedding, c_whisker_embedding = \
-                extract_lion_data(face_cords, lion_name, pil_img, coordinates, tmp_dir, resize_temp_image)
-
-            insert_compressed_data(lion_id, lion_name, c_lion_path,
-                                   c_face_path, c_whisker_path,
-                                   c_lear_path, c_rear_path,
-                                   c_leye_path, c_reye_path,
-                                   c_nose_path)
         if status != "Success":
             print(status)
             r = dict()
@@ -316,6 +306,18 @@ def upload_one_lion(lion_image_path, lion_name, gender, l_status):
             r['status'] = status
             return r
 
+        # for compressed_data
+        resize_temp_image = cv2.resize(src, (30, 30), interpolation=cv2.INTER_NEAREST)
+        c_lion_path, c_face_path, c_whisker_path, c_lear_path, c_rear_path, c_leye_path, c_reye_path, c_nose_path, c_face_embedding, c_whisker_embedding = \
+                extract_lion_data(face_cords, lion_name, pil_img, coordinates, tmp_dir, resize_temp_image)
+
+        insert_compressed_data(lion_id, lion_name, c_lion_path,
+                                   c_face_path, c_whisker_path,
+                                   c_lear_path, c_rear_path,
+                                   c_leye_path, c_reye_path,
+                                   c_nose_path)
+
+        #for lion data
         lion_path, face_path, whisker_path, lear_path,rear_path,leye_path,reye_path, nose_path, face_embedding, whisker_embedding =\
             extract_lion_data(face_cords, lion_name, pil_img, coordinates, tmp_dir, temp_image)
 
@@ -327,7 +329,7 @@ def upload_one_lion(lion_image_path, lion_name, gender, l_status):
                          lear_path, rear_path,
                          leye_path, reye_path,
                          nose_path, face_embedding,
-                         whisker_embedding)
+                         whisker_embedding,hash_value)
 
         # face_bytes = get_base64_str(face_path)
         shutil.rmtree(tmp_dir)

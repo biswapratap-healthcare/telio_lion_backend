@@ -433,7 +433,7 @@ def create_app():
                 args = edit_lion_data_parser.parse_args()
             except Exception as e:
                 rv = dict()
-                rv['health'] = str(e)
+                rv['status'] = str(e)
                 return rv, 404
             try:
                 lion_name = args['lion_name']
@@ -903,10 +903,13 @@ def create_app():
                 _username = args['username']
                 status_or_pwd, ret = admin_reset_password(_admin_username, _admin_password, _username)
                 rv = dict()
-                rv['pwd'] = status_or_pwd
+                rv['status'] = 'Success'
+                rv['Password'] = status_or_pwd
                 if ret == 0:
                     return rv, 200
                 else:
+                    rv = dict()
+                    rv['status'] = status_or_pwd
                     return rv, 404
             except Exception as e:
                 rv = dict()
@@ -1072,4 +1075,5 @@ def create_app():
 
 
 if __name__ == "__main__":
+
     serve(create_app(), host='0.0.0.0', port=8000, threads=20)

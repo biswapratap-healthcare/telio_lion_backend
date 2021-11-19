@@ -914,40 +914,110 @@ def if_table_exists(table_name):
             conn.close()
         return ret
 
+def verify_user(user):
+    conn = None
+    sql = "SELECT username FROM user_data "
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                            password="admin")
+        cur = conn.cursor()
+        cur.execute(sql)
+        records = cur.fetchall()
+        cur.close()
+        df = pd.DataFrame(records,columns = ['username'])
+        user_list = df['username'].tolist()
+        print("Username is",user)
+        if user in user_list:
+            ret = 0
+            ret_str= ''
+            print("User is found")
+        else:
+            ret = -1
+            print("User is not found ")
+            ret_str = "User not found"
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        ret_str = str(error)
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+            return ret ,ret_str
 
 def admin_reset_password(_admin_username, _admin_password, _username):
     role, ret = get_user_parameter(_admin_username, 'role')
+    #verify user
+    u_ret,ret_s = verify_user(_username)
+    print(u_ret,ret_s)
     if role != 'admin':
-        return "Insufficient Permissions", -1
+        return "Insufficient Permissions",-1
     else:
         ret, rr = login(_admin_username, _admin_password)
         if ret is False:
-            return "Invalid Admin Username Password", -1
+            return "Invalid Admin-name or Invalid Password", -1
         else:
-            n = 10
-            _pwd = ''.join(random.choices(string.ascii_uppercase + string.digits, k=n))
-            ret = 0
-            ret_str = _pwd
-            conn = None
-            sql = "UPDATE user_data SET password = %s WHERE username = %s;"
+            if u_ret == -1:
+                return "Invalid User", -1
+            else:
+                n = 10
+                _pwd = ''.join(random.choices(string.ascii_uppercase + string.digits, k=n))
+                ret = 0
+                ret_str = _pwd
+                conn = None
+                sql = "UPDATE user_data SET password = %s WHERE username = %s;"
 
-            try:
-                conn = psycopg2.connect(host=handle,
-                                        database=database,
-                                        user="postgres",
-                                        password="admin")
-                cur = conn.cursor()
-                cur.execute(sql, (_pwd, _username,))
-                conn.commit()
-                cur.close()
-            except (Exception, psycopg2.DatabaseError) as error:
-                print("DB Error: " + str(error))
-                ret_str = str(error)
-                ret = -1
-            finally:
-                if conn is not None:
-                    conn.close()
-                return ret_str, ret
+                try:
+                    conn = psycopg2.connect(host=handle,
+                                            database=database,
+                                            user="postgres",
+                                            password="admin")
+                    cur = conn.cursor()
+                    cur.execute(sql, (_pwd, _username,))
+                    conn.commit()
+                    cur.close()
+                except (Exception, psycopg2.DatabaseError) as error:
+                    print("DB Error: " + str(error))
+                    ret_str = str(error)
+                    ret = -1
+                finally:
+                    if conn is not None:
+                        conn.close()
+                    return ret_str, ret
+
+    # if role != 'admin':
+    #     return "Insufficient Permissions"
+    # else:
+    #     ret, rr = login(_admin_username, _admin_password)
+    #     if ret is False:
+    #         r = -1
+    #         return "Invalid Admin-name or Invalid Password",r
+    #     else:
+    #         n = 10
+    #         _pwd = ''.join(random.choices(string.ascii_uppercase + string.digits, k=n))
+    #         ret = 0
+    #         ret_str = _pwd
+    #         conn = None
+    #         sql = "UPDATE user_data SET password = %s WHERE username = %s;"
+    #
+    #         try:
+    #             conn = psycopg2.connect(host=handle,
+    #                                     database=database,
+    #                                     user="postgres",
+    #                                     password="admin")
+    #             cur = conn.cursor()
+    #             cur.execute(sql, (_pwd, _username,))
+    #             conn.commit()
+    #             cur.close()
+    #         except (Exception, psycopg2.DatabaseError) as error:
+    #             print("DB Error: " + str(error))
+    #             ret_str = str(error)
+    #             ret = -1
+    #         finally:
+    #             if conn is not None:
+    #                 conn.close()
+    #             return ret_str, ret
 
 def modify_password(_un, _old_pw, _new_pw):
     ret, rr = login(_un, _old_pw)
