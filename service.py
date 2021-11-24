@@ -353,10 +353,10 @@ def create_app():
                 return rv, 404
 
     edit_user_data_parser = reqparse.RequestParser()
-    edit_user_data_parser.add_argument('who',
-                                       type=str,
-                                       help='Who is changing the user data.',
-                                       required=True)
+    # edit_user_data_parser.add_argument('who',
+    #                                    type=str,
+    #                                    help='Who is changing the user data.',
+    #                                    required=True)
     edit_user_data_parser.add_argument('whose',
                                        type=str,
                                        help='Whose user data is being changed.',
@@ -369,10 +369,10 @@ def create_app():
                                        type=str,
                                        help='The param value',
                                        required=True)
-    edit_user_data_parser.add_argument('password',
-                                       type=str,
-                                       help='The password of whose (Optional, if who is admin) ',
-                                       required=False)
+    # edit_user_data_parser.add_argument('password',
+    #                                    type=str,
+    #                                    help='The password of whose (Optional, if who is admin) ',
+    #                                    required=False)
 
     @api.route('/edit_user_data')
     @api.expect(edit_user_data_parser)
@@ -387,17 +387,17 @@ def create_app():
                 rv['health'] = str(e)
                 return rv, 404
             try:
-                who = args['who']
+                # who = args['who']
                 whose = args['whose']
                 param_name = args['param_name']
                 param_value = args['param_value']
-                try:
-                    password = args['password']
-                    if password is None:
-                        password = ''
-                except Exception as e:
-                    password = ''
-                ret_str, ret = update_user_parameter(who, whose, password, param_name, param_value)
+                # try:
+                #     password = args['password']
+                #     if password is None:
+                #         password = ''
+                # except Exception as e:
+                #     password = ''
+                ret_str, ret = update_user_parameter( whose, param_name, param_value)
                 rv = dict()
                 rv['status'] = ret_str
                 if ret == 0:

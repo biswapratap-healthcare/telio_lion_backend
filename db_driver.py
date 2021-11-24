@@ -268,12 +268,12 @@ def delete_user(username1, username2, password2):
         return ret_str, ret
 
 
-def update_user_parameter(who, whose, password, var_name, var_value):
-    role, ret = get_user_parameter(who, 'role')
-    if role != 'admin':
-        ret, rr = login(whose, password)
-        if ret is False:
-            return "Insufficient Permissions", -1
+def update_user_parameter( whose, var_name, var_value):
+    # role, ret = get_user_parameter(who, 'role')
+    # if role != 'admin':
+    #     ret, rr = login(whose, password)
+    #     if ret is False:
+    #         return "Insufficient Permissions", -1
     ret = 0
     ret_str = "Success"
     conn = None
