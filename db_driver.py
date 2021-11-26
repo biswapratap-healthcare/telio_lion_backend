@@ -388,12 +388,15 @@ def get_data(offset, count, loggedinuser):
 
 
 
+
 def get_lion_id_info(lion_id):
     rv = dict()
     ret = 0
     conn = None
-    sql = "SELECT id, name, sex, status, click_date, upload_date, latitude, longitude, " \
-          "face, whisker, l_ear, r_ear, l_eye, r_eye, nose FROM lion_data WHERE id = %s;"
+    sql = "SELECT comp_img.id,comp_img.name, l_data.sex, l_data.status, l_data.click_date, l_data.upload_date, l_data.latitude, l_data.longitude," \
+          "comp_img.face, comp_img.whisker, comp_img.l_ear, comp_img.r_ear, comp_img.l_eye, comp_img.r_eye, comp_img.nose FROM compressed_images comp_img "\
+          "INNER JOIN lion_data l_data ON comp_img.id = l_data.id " \
+          "WHERE comp_img.id = %s;"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -692,7 +695,7 @@ def insert_lion_data(_id, name,
                      rear, leye,
                      reye, nose,
                      face_embedding,
-                     whisker_embedding,hash_value):
+                     whisker_embedding,hash_value,Age):
     ret = 0
     status = "Success"
     conn = None
@@ -738,7 +741,7 @@ def insert_lion_data(_id, name,
             str_hash_value = ''
             pass
 
-        sql = """INSERT INTO lion_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
+        sql = """INSERT INTO lion_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
         conn = psycopg2.connect(host=handle,
                                 database=database,
                                 user="postgres",
@@ -761,7 +764,7 @@ def insert_lion_data(_id, name,
                           reye_bytes,
                           nose_bytes,
                           face_embedding,
-                          whisker_embedding,str_hash_value))
+                          whisker_embedding,str_hash_value,Age))
         _id = cur.fetchone()[0]
         if _id:
             conn.commit()
@@ -875,7 +878,8 @@ def create_lion_data_table():
           "nose text, " \
           "face_embedding text, " \
           "whisker_embedding text, " \
-          "hash_value text);"
+          "hash_value text, " \
+          "Age integer);"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -1027,6 +1031,53 @@ def modify_password(_un, _old_pw, _new_pw):
         ret_str = "Invalid existing password."
         ret = -1
     return ret, ret_str
+
+#Pagination
+def get_lion_page(page_number,limit):
+    limit=limit
+    page_number=page_number-1
+    offsets=limit*page_number
+    ret = 0
+    conn = None
+    rv = dict()
+    sql = "SELECT distinct comp_img.name,lion_com.sex,comp_img.id, lion_com.status, lion_com.click_date, lion_com.upload_date, lion_com.latitude, lion_com.longitude, comp_img.face FROM compressed_images comp_img "\
+         "INNER JOIN lion_data lion_com "\
+        "ON comp_img.id = lion_com.id offset %s limit %s;"
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql,(offsets,limit,))
+        records = cur.fetchall()
+        cur.close()
+        df = pd.DataFrame(records, columns=['name', 'sex','id', 'status', 'click_date',
+                                            'upload_date', 'latitude', 'longitude', 'face'])
+        # df = df.groupby(['name'])['sex', 'id','status', 'click_date', 'upload_date', 'latitude', 'longitude', 'face'].apply(lambda x: aggregate(x))
+        lions = list()
+        for index, row in df.iterrows():
+            info = dict()
+            info['name'] = row['name']
+            info['sex'] = row['sex']
+            info['id']=row['id']
+            info['status'] = row['status']
+            info['click_date'] = str(row['click_date'])
+            info['upload_date'] = str(row['upload_date'])
+            info['latitude'] = row['latitude']
+            info['longitude'] = row['longitude']
+            info['face'] = row['face']
+            lions.append(info)
+        rv['lions'] = lions
+        rv['total_lion']=get_current_count()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        rv = dict()
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return rv, ret
 
 
 def login(un, pwd):

@@ -16,7 +16,7 @@ from db_driver import login, create_new_user, modify_password, if_table_exists, 
     create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info, get_data, \
     update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id, get_current_count, \
     get_all_lions, get_lion_parameter, get_user_info, admin_reset_password, get_all_lion_embeddings, \
-    get_lion_gender_info, get_lion_status_info
+    get_lion_gender_info, get_lion_status_info,get_lion_page
 from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
 from compressed_Table import get_all_compressed_lions , create_compressed_table , get_all_compressed_faces
 
@@ -190,12 +190,12 @@ def create_app():
                     rv['status'] = status_file_path
                     return rv, 404
                 name = args['Name']
-                # try:
-                #     age = args['Age']
-                #     if age is None:
-                #         age = ''
-                # except Exception as e:
-                #     age = ''
+                try:
+                    age = args['Age']
+                    if age is None:
+                        age = ''
+                except Exception as e:
+                    age = ''
                 try:
                     gender = args['Gender']
                     if gender is None:
@@ -218,7 +218,7 @@ def create_app():
                 #         rv = dict()
                 #         rv['status'] = "no name associated with id"
                 #         return rv, 404
-                rv = upload_one_lion(status_file_path, name,gender,status)
+                rv = upload_one_lion(status_file_path, name,gender,status,age)
                 return rv, 200
             except Exception as e:
                 rv = dict()
@@ -1029,6 +1029,46 @@ def create_app():
                 rv = dict()
                 rv['status'] = str(e)
                 return rv, 404
+
+    #Pagination
+    get_lion_page_parser = reqparse.RequestParser()
+    get_lion_page_parser.add_argument('page_number',
+                                      type=int,
+                                      help='Page Number in UI',
+                                      required=True)
+
+    get_lion_page_parser.add_argument('limit',
+                                      type=int,
+                                      help='limit of db',
+                                      required=True)
+
+    @api.route('/get_lion_page')
+    @api.expect(get_lion_page_parser)
+    class GetLionPageService(Resource):
+        @api.expect(get_lion_page_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = get_lion_page_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            try:
+                page_number = args['page_number']
+                limit = args['limit']
+
+                rv, ret = get_lion_page(page_number, limit)
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+
 
     @api.route('/get_all_compressed_faces')
     class GetAllCompressedFaces(Resource):

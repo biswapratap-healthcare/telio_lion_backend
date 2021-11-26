@@ -20,7 +20,9 @@ def get_all_compressed_faces():
     ret = 0
     conn = None
     rv = dict()
-    sql = "SELECT name,face FROM compressed_images;"
+    sql = "SELECT comp_img.name,comp_img.id,comp_img.face, ln_data.sex, ln_data.status FROM compressed_images comp_img "\
+         "INNER JOIN lion_data ln_data "\
+        "ON comp_img.id = ln_data.id;"
     try :
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -33,7 +35,10 @@ def get_all_compressed_faces():
         for record in records:
             record = records[0]
             rv['name'] = record[0]
-            rv['face'] = record[1]
+            rv['id'] = record[1]
+            rv['face'] = record[2]
+            rv['gender']=record[3]
+            rv['status']=record[4]
         cur.close()
 
         # df = pd.DataFrame(records, columns=['name', 'face'])

@@ -254,10 +254,11 @@ def get_click_datetime(data):
     return dt
 
 
-def upload_one_lion(lion_image_path, lion_name, gender, l_status):
+def upload_one_lion(lion_image_path, lion_name, gender, l_status,l_age):
     tmp_dir = tempfile.mkdtemp()
     lion_gender = gender
     lion_status = l_status
+    lion_age = l_age
     try:
         lat = f"{0.0}° {0.0}' {0.0}\""
         lon = f"{0.0}° {0.0}' {0.0}\""
@@ -329,7 +330,7 @@ def upload_one_lion(lion_image_path, lion_name, gender, l_status):
                          lear_path, rear_path,
                          leye_path, reye_path,
                          nose_path, face_embedding,
-                         whisker_embedding,hash_value)
+                         whisker_embedding,hash_value,lion_age)
 
         # face_bytes = get_base64_str(face_path)
         shutil.rmtree(tmp_dir)
@@ -401,18 +402,12 @@ def on_board_new_lion(lion, lion_dir, rv, second):
             coordinates, whisker_cords, face_cords, status = lion_model.get_coordinates(lion_image_path, lion)
             c_lion_path, c_face_path, c_whisker_path, c_lear_path, c_rear_path, c_leye_path, c_reye_path, c_nose_path, c_face_embedding, c_whisker_embedding = \
                 extract_lion_data(face_cords, lion, pil_img, coordinates, tmp_dir, resize_temp_image)
-            insert_compressed_data(lion_id, lion, c_lion_path,
-                                   c_face_path, c_whisker_path,
-                                   c_lear_path, c_rear_path,
-                                   c_leye_path, c_reye_path,
-                                   c_nose_path)
+            # insert_compressed_data(lion_id, lion, c_lion_path,
+            #                        c_face_path, c_whisker_path,
+            #                        c_lear_path, c_rear_path,
+            #                        c_leye_path, c_reye_path,
+            #                        c_nose_path)
 
-            # insert_compressed_data(lion_id, lion, \
-            #                   lion_path, \
-            #                  face_path, whisker_path, \
-            #                  lear_path, rear_path, \
-            #                  leye_path, reye_path, \
-            #                  nose_path, hash_value)
 
             if status != "Success":
                 print(status)
@@ -444,7 +439,12 @@ def on_board_new_lion(lion, lion_dir, rv, second):
                                          lear_path, rear_path,
                                          leye_path, reye_path,
                                          nose_path, face_embedding,
-                                         whisker_embedding, hash_value)
+                                         whisker_embedding, hash_value,0)
+                        insert_compressed_data(lion_id, lion, c_lion_path,
+                                               c_face_path, c_whisker_path,
+                                               c_lear_path, c_rear_path,
+                                               c_leye_path, c_reye_path,
+                                               c_nose_path)
                         r = dict()
                         r['lion_name'] = lion
                         r['lion_image_file_name'] = lion_image
@@ -459,12 +459,17 @@ def on_board_new_lion(lion, lion_dir, rv, second):
                                      lear_path, rear_path,
                                      leye_path, reye_path,
                                      nose_path, face_embedding,
-                                     whisker_embedding, hash_value)
+                                     whisker_embedding, hash_value,0)
                     r = dict()
                     r['lion_name'] = lion
                     r['lion_image_file_name'] = lion_image
                     r['status'] = 'Success'
                     rv['status'].append(r)
+                    insert_compressed_data(lion_id, lion, c_lion_path,
+                                           c_face_path, c_whisker_path,
+                                           c_lear_path, c_rear_path,
+                                           c_leye_path, c_reye_path,
+                                           c_nose_path)
             else:
                 r = dict()
                 r['lion_name'] = lion
