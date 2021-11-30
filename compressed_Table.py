@@ -20,7 +20,7 @@ def get_all_compressed_faces():
     ret = 0
     conn = None
     rv = dict()
-    sql = "SELECT comp_img.name,comp_img.id,comp_img.face, ln_data.sex, ln_data.status FROM compressed_images comp_img "\
+    sql = "SELECT comp_img.id,comp_img.name,comp_img.face, ln_data.sex, ln_data.status FROM compressed_images comp_img "\
          "INNER JOIN lion_data ln_data "\
         "ON comp_img.id = ln_data.id;"
     try :
@@ -32,22 +32,26 @@ def get_all_compressed_faces():
         cur = conn.cursor()
         cur.execute(sql)
         records = cur.fetchall()
+        lion_instance = list()
         for record in records:
-            record = records[0]
-            rv['name'] = record[0]
-            rv['id'] = record[1]
-            rv['face'] = record[2]
-            rv['gender']=record[3]
-            rv['status']=record[4]
+            one_record = dict()
+            one_record['id'] = record[0]
+            one_record['name'] = record[1]
+            one_record['face'] = record[2]
+            one_record['gender']=record[3]
+            one_record['status']=record[4]
+            lion_instance.append(one_record)
+        rv['lion'] = lion_instance
         cur.close()
-
-        # df = pd.DataFrame(records, columns=['name', 'face'])
-        # df = df.groupby(['name'])['face'].apply(lambda x: aggregate(x)).reset_index()
+        # df = pd.DataFrame(records, columns=['id', 'name','face','sex', 'status'])
         # lions = list()
-        # for index, row in df.iteritems():
+        # for index, row in df.iterrows():
         #     info = dict()
         #     info['name'] = row['name']
+        #     info['id'] = row['id']
         #     info['face'] = row['face']
+        #     info['sex'] = row['sex']
+        #     info['status'] = row['status']
         #     lions.append(info)
         # rv['lions'] = lions
     except (Exception, psycopg2.DatabaseError) as error:
@@ -58,6 +62,17 @@ def get_all_compressed_faces():
         if conn is not None:
             conn.close()
         return rv, ret
+
+
+
+    # except (Exception, psycopg2.DatabaseError) as error:
+    #     print("DB Error: " + str(error))
+    #     rv = dict()
+    #     ret = -1
+    # finally:
+    #     if conn is not None:
+    #         conn.close()
+    #     return rv, ret
 
 
 def get_all_compressed_lions():

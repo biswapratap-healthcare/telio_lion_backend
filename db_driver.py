@@ -396,7 +396,7 @@ def get_lion_id_info(lion_id):
     sql = "SELECT comp_img.id,comp_img.name, l_data.sex, l_data.status, l_data.click_date, l_data.upload_date, l_data.latitude, l_data.longitude," \
           "comp_img.face, comp_img.whisker, comp_img.l_ear, comp_img.r_ear, comp_img.l_eye, comp_img.r_eye, comp_img.nose FROM compressed_images comp_img "\
           "INNER JOIN lion_data l_data ON comp_img.id = l_data.id " \
-          "WHERE comp_img.id = %s;"
+          "WHERE comp_img.id LIKE %s;"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -439,8 +439,10 @@ def get_lion_name_info(lion_name):
     rv = dict()
     ret = 0
     conn = None
-    sql = "SELECT id, name, sex, status, click_date, upload_date, latitude, longitude, " \
-          "face, whisker, l_ear, r_ear, l_eye, r_eye, nose FROM lion_data WHERE name = %s;"
+    sql = "SELECT comp_img.id,comp_img.name, l_data.sex, l_data.status, l_data.click_date, l_data.upload_date, l_data.latitude, l_data.longitude," \
+          "comp_img.face, comp_img.whisker, comp_img.l_ear, comp_img.r_ear, comp_img.l_eye, comp_img.r_eye, comp_img.nose FROM compressed_images comp_img "\
+          "INNER JOIN lion_data l_data ON comp_img.id = l_data.id " \
+          "WHERE comp_img.name LIKE %s;"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -485,8 +487,10 @@ def get_lion_gender_info(lion_gender):
     rv = dict()
     ret = 0
     conn = None
-    sql = "SELECT id, name, sex, status, click_date, upload_date, latitude, longitude, " \
-          "face, whisker, l_ear, r_ear, l_eye, r_eye, nose FROM lion_data WHERE sex = %s;"
+    sql = "SELECT comp_img.id,comp_img.name, l_data.sex, l_data.status, l_data.click_date, l_data.upload_date, l_data.latitude, l_data.longitude," \
+          "comp_img.face, comp_img.whisker, comp_img.l_ear, comp_img.r_ear, comp_img.l_eye, comp_img.r_eye, comp_img.nose FROM compressed_images comp_img "\
+          "INNER JOIN lion_data l_data ON comp_img.id = l_data.id " \
+          "WHERE l_data.sex = %s;"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -530,8 +534,10 @@ def get_lion_status_info(lion_status):
     rv = dict()
     ret = 0
     conn = None
-    sql = "SELECT id, name, sex, status, click_date, upload_date, latitude, longitude, " \
-          "face, whisker, l_ear, r_ear, l_eye, r_eye, nose FROM lion_data WHERE status = %s;"
+    sql = "SELECT comp_img.id,comp_img.name, l_data.sex, l_data.status, l_data.click_date, l_data.upload_date, l_data.latitude, l_data.longitude," \
+          "comp_img.face, comp_img.whisker, comp_img.l_ear, comp_img.r_ear, comp_img.l_eye, comp_img.r_eye, comp_img.nose FROM compressed_images comp_img "\
+          "INNER JOIN lion_data l_data ON comp_img.id = l_data.id " \
+          "WHERE l_data.status = %s;"
     try:
         conn = psycopg2.connect(host=handle,
                                 database=database,

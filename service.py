@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import zipfile
+from PIL import Image
 
 from waitress import serve
 from flask_cors import CORS
@@ -18,7 +19,10 @@ from db_driver import login, create_new_user, modify_password, if_table_exists, 
     get_all_lions, get_lion_parameter, get_user_info, admin_reset_password, get_all_lion_embeddings, \
     get_lion_gender_info, get_lion_status_info,get_lion_page
 from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
-from compressed_Table import get_all_compressed_lions , create_compressed_table , get_all_compressed_faces
+from compressed_Table import get_all_compressed_lions, create_compressed_table, get_all_compressed_faces
+
+import traceback
+
 
 def store_and_verify_file(file_from_request, work_dir):
     if not file_from_request.filename:
@@ -44,6 +48,20 @@ def upload_and_verify_file(file_from_request, work_dir):
     except Exception as ex:
         return -1, str(ex), None
 
+def png_to_jpeg_converter(dir_path):
+    base_path=dir_path
+    for infile in os.listdir(base_path):
+        if infile[-3:] == "png":
+            # print(infile)
+            img_path=base_path+'/'+infile.split('.')[0] + '.png'
+            outfile=dir_path+'/'+infile.split('.')[0] + '.jpg'
+            print("outfile: ",outfile)
+
+            im = Image.open(img_path)
+            if not im.mode == 'RGB':
+                im = im.convert('RGB')
+            im.save(outfile)
+            os.remove(img_path)
 
 
 
@@ -145,7 +163,7 @@ def create_app():
                                type=FileStorage,
                                help='The instance file to be uploaded.',
                                required=True)
-    upload_parser.add_argument('Name',
+    upload_parser.add_argument('name',
                                type=str,
                                help='The name of the lion.',
                                required=True)
@@ -189,7 +207,7 @@ def create_app():
                     rv = dict()
                     rv['status'] = status_file_path
                     return rv, 404
-                name = args['Name']
+                name = args['name']
                 try:
                     age = args['Age']
                     if age is None:
@@ -612,6 +630,9 @@ def create_app():
                     zip_handle.extractall(path=extract_dir)
                     zip_handle.close()
                     _payload_dir = os.path.join(extract_dir, 'images')
+                    png_to_jpeg_converter(_payload_dir)
+
+
                     _lion_images = os.listdir(_payload_dir)
                     rv = dict()
                     rv['status'] = []
@@ -674,6 +695,14 @@ def create_app():
                     zip_handle.close()
                     _payload_dir = os.path.join(extract_dir, 'lions')
                     _lions = os.listdir(_payload_dir)
+
+                    path = _payload_dir
+                    for folder in os.listdir(path):
+                        basepath = os.path.join(path, folder)
+
+                        png_to_jpeg_converter(basepath)
+
+
                     rv = dict()
                     rv['status'] = []
                     embeddings = get_all_lion_embeddings()
