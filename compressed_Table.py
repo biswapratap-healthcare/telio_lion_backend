@@ -10,19 +10,23 @@ import psycopg2
 import matplotlib.pyplot as plt
 import scipy.fftpack
 import hashlib
-from db_driver import aggregate
+from db_driver import aggregate ,get_current_count
 # handle = "localhost"
 handle = "34.93.181.52"
 database = "telio_lions"
 
 
-def get_all_compressed_faces():
+def get_all_compressed_faces(page_number,limit):
+    limit = limit
+    page_number = page_number - 1
+    offsets = limit * page_number
+    #print(offsets,limit)
     ret = 0
     conn = None
     rv = dict()
     sql = "SELECT comp_img.id,comp_img.name,comp_img.face, ln_data.sex, ln_data.status FROM compressed_images comp_img "\
          "INNER JOIN lion_data ln_data "\
-        "ON comp_img.id = ln_data.id;"
+        "ON comp_img.id = ln_data.id offset %s limit %s;"
     try :
         conn = psycopg2.connect(host=handle,
                                 database=database,
@@ -30,7 +34,7 @@ def get_all_compressed_faces():
                                 password="admin")
 
         cur = conn.cursor()
-        cur.execute(sql)
+        cur.execute(sql,(offsets,limit,))
         records = cur.fetchall()
         lion_instance = list()
         for record in records:
@@ -41,19 +45,12 @@ def get_all_compressed_faces():
             one_record['gender']=record[3]
             one_record['status']=record[4]
             lion_instance.append(one_record)
+        #print(len(lion_instance))
         rv['lion'] = lion_instance
+        rv['total_count'] = get_current_count()
+
         cur.close()
-        # df = pd.DataFrame(records, columns=['id', 'name','face','sex', 'status'])
-        # lions = list()
-        # for index, row in df.iterrows():
-        #     info = dict()
-        #     info['name'] = row['name']
-        #     info['id'] = row['id']
-        #     info['face'] = row['face']
-        #     info['sex'] = row['sex']
-        #     info['status'] = row['status']
-        #     lions.append(info)
-        # rv['lions'] = lions
+
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
         rv = dict()
@@ -62,6 +59,7 @@ def get_all_compressed_faces():
         if conn is not None:
             conn.close()
         return rv, ret
+
 
 
 

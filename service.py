@@ -172,15 +172,15 @@ def create_app():
     #                            help='The id similar to another lion (optional).',
     #                            required=False)
 
-    upload_parser.add_argument('Age',
+    upload_parser.add_argument('age',
                                type=int,
                                help='The age of the lion.',
                                required=False)
-    upload_parser.add_argument('Gender',
+    upload_parser.add_argument('gender',
                                type=str,
                                help='The gender of the lion.',
                                required=False)
-    upload_parser.add_argument('Status',
+    upload_parser.add_argument('status',
                                type=str,
                                help='The status of the lion.',
                                required=False)
@@ -209,19 +209,19 @@ def create_app():
                     return rv, 404
                 name = args['name']
                 try:
-                    age = args['Age']
+                    age = args['age']
                     if age is None:
                         age = ''
                 except Exception as e:
                     age = ''
                 try:
-                    gender = args['Gender']
+                    gender = args['gender']
                     if gender is None:
                         gender = ''
                 except Exception as e:
                     gender = ''
                 try:
-                    status = args['Status']
+                    status = args['status']
                     if gender is None:
                         status = ''
                 except Exception as e:
@@ -1097,19 +1097,38 @@ def create_app():
                 rv['status'] = str(e)
                 return rv, 404
 
+    # Pagination in popup
+    get_all_compressed_faces_parser = reqparse.RequestParser()
+    get_all_compressed_faces_parser.add_argument('page_number',
+                                                     type=int,
+                                                     help='Page Number in UI',
+                                                     required=True)
 
+    get_all_compressed_faces_parser.add_argument('limit',
+                                                     type=int,
+                                                     help='limit of db',
+                                                     required=True)
 
     @api.route('/get_all_compressed_faces')
     class GetAllCompressedFaces(Resource):
+        @api.expect(get_all_compressed_faces_parser)
         @api.doc(responses={"response": 'json'})
-        def get(self):
+        def post(self):
             try:
-                # ret, r = get_all_lions()
-                ret, r = get_all_compressed_faces()
-                if r == 0:
-                    return ret, 200
+                args = get_all_compressed_faces_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            try:
+                page_number = args['page_number']
+                limit = args['limit']
+
+                rv, ret = get_all_compressed_faces(page_number, limit)
+                if ret == 0:
+                    return rv, 200
                 else:
-                    return ret, 404
+                    return rv, 404
             except Exception as e:
                 rv = dict()
                 rv['status'] = str(e)
