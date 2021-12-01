@@ -82,6 +82,8 @@ def get_current_count():
     r = 0
     male_lions = 0
     female_lions = 0
+    Cubs = 0
+    Lactating_female = 0
     unknown_sex_lions = 0
     alive_lions = 0
     dead_lions = 0
@@ -105,6 +107,10 @@ def get_current_count():
                 male_lions += 1
             elif sex == 'F':
                 female_lions += 1
+            elif sex == 'C':
+                Cubs +=1
+            elif sex == 'LF':
+                Lactating_female +=1
             else:
                 unknown_sex_lions += 1
             if status == 'D':
@@ -114,6 +120,8 @@ def get_current_count():
         ret['total'] = str(total_lions)
         ret['male'] = str(male_lions)
         ret['female'] = str(female_lions)
+        ret['Lactating_female'] = str(Lactating_female)
+        ret['Cubs'] = str(Cubs)
         ret['unknown_sex'] = str(unknown_sex_lions)
         ret['alive'] = str(alive_lions)
         ret['dead'] = str(dead_lions)
