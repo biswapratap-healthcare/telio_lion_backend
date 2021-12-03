@@ -1054,7 +1054,7 @@ def get_lion_page(page_number,limit):
     ret = 0
     conn = None
     rv = dict()
-    sql = "SELECT distinct comp_img.name,lion_com.sex,comp_img.id, lion_com.status, lion_com.click_date, lion_com.upload_date, lion_com.latitude, lion_com.longitude, comp_img.face FROM compressed_images comp_img "\
+    sql = "SELECT distinct on (comp_img.name) comp_img.name,lion_com.sex,comp_img.id, lion_com.status, lion_com.click_date, lion_com.upload_date, lion_com.latitude, lion_com.longitude, comp_img.face FROM compressed_images comp_img "\
          "INNER JOIN lion_data lion_com "\
         "ON comp_img.id = lion_com.id offset %s limit %s;"
     try:
@@ -1084,6 +1084,67 @@ def get_lion_page(page_number,limit):
             lions.append(info)
         rv['lions'] = lions
         rv['total_lion']=get_current_count()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("DB Error: " + str(error))
+        rv = dict()
+        ret = -1
+    finally:
+        if conn is not None:
+            conn.close()
+        return rv, ret
+
+#pagination on lion details option
+def get_lion_details_info(lion_name,page_number,limit):
+    limit=limit
+    page_number=page_number-1
+    offsets=limit*page_number
+    lion_name=lion_name
+    ret = 0
+    conn = None
+    rv = dict()
+
+    sql1="select count(*) from lion_data where name= %s;"
+
+    sql = "SELECT comp_img.name,lion_com.sex,comp_img.id, lion_com.status, lion_com.click_date, lion_com.upload_date, lion_com.latitude, lion_com.longitude, comp_img.face FROM compressed_images comp_img "\
+         "INNER JOIN lion_data lion_com "\
+        "ON comp_img.id = lion_com.id where comp_img.name = %s offset %s limit %s;"
+
+
+    try:
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql1,(lion_name,))
+        lion_count = cur.fetchall()
+        cur.close()
+        conn = psycopg2.connect(host=handle,
+                                database=database,
+                                user="postgres",
+                                password="admin")
+        cur = conn.cursor()
+        cur.execute(sql,(lion_name,offsets,limit,))
+        records = cur.fetchall()
+        cur.close()
+        df = pd.DataFrame(records, columns=['name', 'sex','id', 'status', 'click_date',
+                                            'upload_date', 'latitude', 'longitude', 'face'])
+        # df = df.groupby(['name'])['sex', 'id','status', 'click_date', 'upload_date', 'latitude', 'longitude', 'face'].apply(lambda x: aggregate(x))
+        lions = list()
+        for index, row in df.iterrows():
+            info = dict()
+            info['name'] = row['name']
+            info['sex'] = row['sex']
+            info['id']=row['id']
+            info['status'] = row['status']
+            info['click_date'] = str(row['click_date'])
+            info['upload_date'] = str(row['upload_date'])
+            info['latitude'] = row['latitude']
+            info['longitude'] = row['longitude']
+            info['face'] = row['face']
+            lions.append(info)
+        rv['lions'] = lions
+        rv['count_particular_lion']=lion_count[0][0]
     except (Exception, psycopg2.DatabaseError) as error:
         print("DB Error: " + str(error))
         rv = dict()
