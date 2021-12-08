@@ -17,7 +17,10 @@ from db_driver import login, create_new_user, modify_password, if_table_exists, 
     create_user_data_table, truncate_table, drop_table, get_lion_name_info, get_lion_id_info, get_data, \
     update_lion_name_parameter, update_user_parameter, delete_user, delete_lion_name, delete_lion_id, get_current_count, \
     get_all_lions, get_lion_parameter, get_user_info, admin_reset_password, get_all_lion_embeddings, \
-    get_lion_gender_info, get_lion_status_info,get_lion_page,get_lion_details_info
+    get_lion_gender_info, get_lion_status_info,get_lion_page,get_lion_by_filter,get_lion_gender_status,get_lion_nml,get_lion_id_name,get_lion_name_gender,\
+    get_lion_id_gender,get_lion_id_status,get_lion_name_status,get_lion_id_gender_status ,get_lion_id_name_status ,get_lion_id_name_gender,get_lion_details_info, \
+    veterinary_health_details
+
 from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
 from compressed_Table import get_all_compressed_lions, create_compressed_table, get_all_compressed_faces
 
@@ -957,6 +960,9 @@ def create_app():
     modify_password_parser.add_argument('new_pw',
                                         type=str,
                                         help='New Password',
+
+
+
                                         required=True)
 
     @api.route('/modify_password')
@@ -1006,6 +1012,17 @@ def create_app():
                                type=str,
                                help='The lion status ',
                                required=False)
+    # Pagination
+
+    search_parser.add_argument('page_number',
+                                      type=int,
+                                      help='Page Number in UI',
+                                      required=True)
+
+    search_parser.add_argument('limit',
+                                type=int,
+                                help='limit of db',
+                                required=True)
 
     @api.route('/SearchByFilter')
     @api.expect(search_parser)
@@ -1021,43 +1038,154 @@ def create_app():
                 return rv, 404
 
             try:
-                if args['lion_id']:
-                    _id = args['lion_id']
-                    rv, ret = get_lion_id_info(_id)
+                page_number = args['page_number']
+                limit = args['limit']
+                id = args['lion_id']
+                try:
+                    if id is None:
+                        id = 0
+                except Exception  as e:
+                    id = 0
+                name = args['lion_name']
+                try :
+                    if name is None:
+                        name = 0
+                except Exception as e:
+                    name = 0
+
+                _status = args['lion_status']
+                try:
+                    if _status is None:
+                        _status = 0
+                except Exception as e:
+                    _status = 0
+
+                gender = args['lion_gender']
+                try:
+                    if gender is None:
+                        gender = 0
+                except Exception as e:
+                    gender = 0
+
+
+
+                if id and (not(name)) and (not(_status)) and (not(gender)):
+                    rv, ret = get_lion_id_info(id,page_number,limit)
+                    if ret == 0:
+                        return rv,200
+                    else:
+                        return rv,404
+
+                if gender and (not(name)) and (not(_status)) and (not(id)):
+                    rv, ret = get_lion_gender_info(gender,page_number,limit)
+
                     if ret == 0:
                         return rv, 200
                     else:
                         return rv, 404
 
-                elif args['lion_name']:
-                    _name = args['lion_name']
-                    rv, ret = get_lion_name_info(_name)
+                if _status and (not(name)) and (not(gender)) and (not(id)):
+                    rv, ret = get_lion_status_info(_status,page_number,limit)
                     if ret == 0:
                         return rv, 200
                     else:
                         return rv, 404
 
-                elif args['lion_gender']:
-                    _gender = args['lion_gender']
-                    rv, ret = get_lion_gender_info(_gender)
+                if name and (not(id)) and (not(_status)) and (not(gender)):
+                    rv, ret = get_lion_name_info(name,page_number,limit)
                     if ret == 0:
                         return rv, 200
                     else:
                         return rv, 404
 
-                elif args['lion_status']:
-                    _status = args['lion_status']
-                    rv ,ret = get_lion_status_info(_status)
+
+                if id and name and (not(gender)) and (not(_status)):
+                    rv,ret = get_lion_id_name(id,name,page_number,limit)
+                    if ret == 0:
+                        return rv,200
+                    else:
+                        return rv,404
+
+                if id and gender and (not(_status)) and (not(name)):
+                    rv,ret = get_lion_id_gender(id,gender,page_number,limit)
+                    if ret == 0:
+                        return rv,200
+                    else:
+                        return rv,404
+
+                if id and _status and (not(gender)) and (not(name)):
+                    rv, ret = get_lion_id_status(id,_status,page_number,limit)
                     if ret == 0:
                         return rv, 200
                     else:
-                        return rv, 400
+                        return rv, 404
+
+
+
+                if name and gender and (not(_status)) and (not(id)):
+                    rv,ret = get_lion_name_gender(name,gender,page_number,limit)
+                    if ret == 0:
+                        return rv,200
+                    else:
+                        return rv,404
+
+                if name and _status and (not(gender)) and (not(id)):
+                    rv,ret = get_lion_name_status(name,_status,page_number,limit)
+                    if ret == 0:
+                        return rv,200
+                    else:
+                        return rv,404
+
+
+                if gender and _status and (not(name)) and (not(id)):
+                    rv, ret = get_lion_gender_status(gender,_status,page_number,limit)
+                    if ret == 0:
+                        return rv, 200
+                    else:
+                        return rv,404
+                if id and gender and _status and (not(name)):
+                        rv,ret = get_lion_id_gender_status(id,gender,_status,page_number,limit)
+                        if ret == 0:
+                            return rv ,200
+                        else:
+                            return rv,404
+
+                if id and _status and name and (not(gender)):
+                    rv,ret = get_lion_id_name_status(id,name,_status,page_number,limit)
+                    if ret == 0:
+                        return rv ,200
+                    else:
+                        return rv,404
+
+                if name and gender and _status and (not(id)):
+                    rv,ret = get_lion_nml(name,gender,_status,page_number,limit)
+                    if ret == 0:
+                        return rv ,200
+                    else:
+                        return rv,404
+                if id and gender and name and (not(_status)):
+                    rv,ret = get_lion_id_name_gender(id,name,gender,page_number,limit)
+                    if ret == 0:
+                        return rv ,200
+                    else:
+                        return rv,404
+                if id and name and gender and _status:
+                    rv, ret=get_lion_by_filter(id,name,gender,_status,page_number,limit)
+                    if ret == 0:
+                        return rv, 200
+                    else:
+                        return rv, 404
 
 
             except Exception as e:
                 rv = dict()
                 rv['status'] = str(e)
                 return rv, 404
+
+
+
+
+
 
     #Pagination
     get_lion_page_parser = reqparse.RequestParser()
@@ -1098,6 +1226,7 @@ def create_app():
                 rv = dict()
                 rv['status'] = str(e)
                 return rv, 404
+
 
     get_lion_details_page_parser = reqparse.RequestParser()
 
@@ -1187,6 +1316,25 @@ def create_app():
                                      help='dummy variable',
                                      required=True)
 
+
+   #veterinary_History_select
+    @api.route('/veterinary_health details')
+    class GetAllLionsService(Resource):
+        @api.doc(responses={ "response": 'json'})
+
+        def get(self):
+            try:
+                # ret, r = veterinary_health details()
+                ret, r = veterinary_health_details()
+                if r == 0:
+                    return ret, 200
+                else:
+                    return ret, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
     @api.route('/health_check')
     @api.expect(health_check_parser)
     class HealthCheckService(Resource):
@@ -1210,5 +1358,5 @@ def create_app():
 
 
 if __name__ == "__main__":
-
     serve(create_app(), host='0.0.0.0', port=8000, threads=20)
+

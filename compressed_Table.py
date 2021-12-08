@@ -16,6 +16,7 @@ handle = "34.93.181.52"
 database = "telio_lions"
 
 
+
 def get_all_compressed_faces(page_number,limit):
     limit = limit
     page_number = page_number - 1
@@ -176,6 +177,99 @@ def img_hash_value(images):
 #         else:
 #             insert_compressed_data()
 
+def match_lion(face_embedding, whisker_embedding, ret):
+    ret['threshold'] = threshold.get_threshold()
+    match_data = list()
+    embeddings = get_all_lion_embeddings()
+    if len(face_embedding) == 0:
+        face_emb = [float(0.0) for _ in range(0, embedding_dim, 1)]
+    else:
+        face_emb = list()
+        for x in face_embedding.split(','):
+            try:
+                face_emb.append(float(x))
+            except Exception as e:
+                print(x)
+                face_emb.append(float('0.0'))
+    if len(whisker_embedding) == 0:
+        whisker_emb = [float(0.0) for _ in range(0, embedding_dim, 1)]
+    else:
+        whisker_emb = list()
+        for x in whisker_embedding.split(','):
+            try:
+                whisker_emb.append(float(x))
+            except Exception as e:
+                print(x)
+                whisker_emb.append(float('0.0'))
+    no_face_or_whisker = 1
+    for embedding in embeddings:
+        ref_id = embedding[0]
+        ref_lion_name = embedding[1]
+        ref_face_embedding = list()
+        for x in embedding[2].split(','):
+            try:
+                ref_face_embedding.append(float(x))
+            except Exception as e:
+                print(x)
+                ref_face_embedding.append(float('0.0'))
+        ref_whisker_embedding = list()
+        for x in embedding[3].split(','):
+            try:
+                ref_whisker_embedding.append(float(x))
+            except Exception as e:
+                print(x)
+                ref_whisker_embedding.append(float('0.0'))
+        face_distance = spatial.distance.cosine(ref_face_embedding, face_emb)
+        whisker_distance = spatial.distance.cosine(ref_whisker_embedding, whisker_emb)
+        if is_whiskers:
+            d = face_distance
+        else:
+            d = whisker_distance
+        if d != 0:
+            no_face_or_whisker = 0
+            match_data.append((ref_id, ref_lion_name, face_distance, whisker_distance))
+
+    if is_whiskers:
+        index = 3
+    else:
+        index = 2
+
+    if len(match_data) == 0:
+        if no_face_or_whisker:
+            ret['type'] = 'Unknown'
+            ret['distance'] = 1.00
+        else:
+            ret['type'] = 'New'
+            ret['distance'] = threshold.get_threshold()
+    else:
+        match_data.sort(key=lambda x1: x1[index])
+
+    print(match_data)
+
+    if len(match_data) > 0:
+        _1st_match = match_data[0]
+        d_1st = _1st_match[index]
+        if d_1st <= threshold.get_threshold():
+            ret['type'] = 'Similar'
+            ret['similar'] = [{'id': _1st_match[0], 'name': _1st_match[1]}]
+            ret['distance'] = round(d_1st, 2)
+        else:
+            ret['type'] = 'New'
+            ret['distance'] = round(d_1st, 2)
+    if len(match_data) > 1:
+        _2nd_match = match_data[1]
+        d_2nd = _2nd_match[index]
+        if d_2nd <= threshold.get_threshold():
+            ret['similar'].append({'id': _2nd_match[0], 'name': _2nd_match[1]})
+            ret['distance'] = round(d_2nd, 2)
+    if len(match_data) > 2:
+        _3rd_match = match_data[2]
+        d_3rd = _3rd_match[index]
+        if d_3rd <= threshold.get_threshold():
+            ret['similar'].append({'id': _3rd_match[0], 'name': _3rd_match[1]})
+            ret['distance'] = round(d_3rd, 2)
+    return ret
+
 def insert_compressed_data(_id, name,
                            image, face,
                            whisker, lear,
@@ -192,26 +286,25 @@ def insert_compressed_data(_id, name,
             image_bytes = ''
             pass
         face_bytes = get_base64_str(face)
-
         whisker_bytes = get_base64_str(whisker)
         try:
-            lear_bytes = get_base64_str(l_ear)
+            lear_bytes = get_base64_str(lear)
         except Exception as e:
             lear_bytes = ''
             pass
-
         try:
-            rear_bytes = get_base64_str(r_ear)
+            rear_bytes = get_base64_str(rear)
         except Exception as e:
             rear_bytes = ''
             pass
         try:
-            leye_bytes = get_base64_str(l_eye)
+            leye_bytes = get_base64_str(leye)
         except Exception as e:
             leye_bytes = ''
             pass
+
         try:
-            reye_bytes = get_base64_str(r_eye)
+            reye_bytes = get_base64_str(reye)
         except Exception as e:
             reye_bytes = ''
             pass
@@ -221,31 +314,29 @@ def insert_compressed_data(_id, name,
             nose_bytes = ''
             pass
 
-
-
         # try:
         #     hash_value = hash_value
         # except Exception as e:
         #     hash_value = ''
         #     pass
 
-        sql = """INSERT INTO compressed_images VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
+        sql = """INSERT INTO compressed_images VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING ID;"""
         conn = psycopg2.connect(host=handle,
-                                database=database,
-                                user="postgres",
-                                password="admin")
+                            database=database,
+                            user="postgres",
+                            password="admin")
         cur = conn.cursor()
         cur.execute(sql, (_id,
-                          name,
-                          image_bytes,
-                          face_bytes,
-                          whisker_bytes,
-                          lear_bytes,
-                          rear_bytes,
-                          leye_bytes,
-                          reye_bytes,
-                          nose_bytes
-                          ))
+                      name,
+                      image_bytes,
+                      face_bytes,
+                      whisker_bytes,
+                      lear_bytes,
+                      rear_bytes,
+                      leye_bytes,
+                      reye_bytes,
+                      nose_bytes,
+                      ))
         _id = cur.fetchone()[0]
         if _id:
             conn.commit()
@@ -258,10 +349,13 @@ def insert_compressed_data(_id, name,
         print("DB Error: " + str(error))
         ret = -1
         status = str(error)
+
     finally:
         if conn is not None:
             conn.close()
-        return ret, status
+
+
+
 
 
 def create_compressed_table():
