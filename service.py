@@ -19,7 +19,8 @@ from db_driver import login, create_new_user, modify_password, if_table_exists, 
     get_all_lions, get_lion_parameter, get_user_info, admin_reset_password, get_all_lion_embeddings, \
     get_lion_gender_info, get_lion_status_info,get_lion_page,get_lion_by_filter,get_lion_gender_status,get_lion_nml,get_lion_id_name,get_lion_name_gender,\
     get_lion_id_gender,get_lion_id_status,get_lion_name_status,get_lion_id_gender_status ,get_lion_id_name_status ,get_lion_id_name_gender,get_lion_details_info, \
-    veterinary_health_details
+    veterinary_health_details,get_lion_id_page,create_veterinary_history
+
 
 from utils import on_board_new_lion, current_milli_time, check_upload, upload_one_lion
 from compressed_Table import get_all_compressed_lions, create_compressed_table, get_all_compressed_faces
@@ -548,6 +549,7 @@ def create_app():
                                          type=str,
                                          help='The lion id',
                                          required=True)
+
     @api.route('/get_lion_id_info')
     @api.expect(get_lion_id_info_parser)
     class GetLionIDInfoService(Resource):
@@ -1070,7 +1072,7 @@ def create_app():
 
 
                 if id and (not(name)) and (not(_status)) and (not(gender)):
-                    rv, ret = get_lion_id_info(id,page_number,limit)
+                    rv, ret =get_lion_id_page(id,page_number,limit)
                     if ret == 0:
                         return rv,200
                     else:
@@ -1317,7 +1319,103 @@ def create_app():
                                      required=True)
 
 
-   #veterinary_History_select
+    #create Veterinary table
+    
+    create_veterinary_history_parser = reqparse.RequestParser()
+    create_veterinary_history_parser.add_argument('lion_id',
+                                                  type=int,
+                                                  help='Lion_id',
+                                                  required=True)
+    create_veterinary_history_parser.add_argument('microchip_number',
+                                                  type=int,
+                                                  help='microchip_number',
+                                                  required=False)
+    create_veterinary_history_parser.add_argument('approx_age',
+                                                  type=int,
+                                                  help='approx_age',
+                                                  required=False)
+    create_veterinary_history_parser.add_argument('category_based_on_age',
+                                                  type=str,
+                                                  help='category_based_on_age',
+                                                  required=False)
+    create_veterinary_history_parser.add_argument('sex',
+                                                  type=str,
+                                                  help='sex',
+                                                  required=False)
+    create_veterinary_history_parser.add_argument('if_female_lactating_or_not',
+                                                  type=str,
+                                                  help='if_female_lactating_or_not',
+                                                  required=False)
+    create_veterinary_history_parser.add_argument('radio_collar_no',
+                                                  type=str,
+                                                  help='radio_collar_no',
+                                                  required=False)
+    create_veterinary_history_parser.add_argument('frequency_on_reciever',
+                                                  type=str,
+                                                  help='frequency_on_reciever',
+                                                  required=False)
+    create_veterinary_history_parser.add_argument('date_of_radio_collaring',
+                                                  type=str,
+                                                  help='date_of_radio_collaring',
+                                                  required=False)
+
+    @api.route('/create_veterinary_history')
+    @api.expect(create_veterinary_history_parser)
+    class CreateNewMedicalHistory(Resource):
+        @api.expect(create_veterinary_history_parser)
+        @api.doc(responses={"response": 'json'})
+        def post(self):
+            try:
+                args = create_veterinary_history_parser.parse_args()
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+            try:
+                _lion_id = args['lion_id']
+                _microchip_number = args['microchip_number']
+                _approx_age = args['approx_age']
+                _category_based_on_age = args['category_based_on_age']
+                _sex = args['sex']
+                _if_female_lactating_or_not = args['if_female_lactating_or_not']
+                _radio_collar_no = args['radio_collar_no']
+                _frequency_on_reciever = args['frequency_on_reciever']
+                _date_of_radio_collaring = args['date_of_radio_collaring']
+                _place_of_radio_collaring = args['place_of_radio_collaring']
+                _date_of_rescue = args['date_of_rescue']
+                _place_of_rescue = args['place_of_rescue']
+                _reason_of_rescue = args['reason_of_rescue']
+                _date_of_release = args['date_of_release']
+                _place_of_release = args['place_of_release']
+                _captivity_details = args['captivity_details']
+                _clinical_observations = args['clinical_observations']
+                _veterinary_treatment_or_prophylaxis = args['veterinary_treatment_or_prophylaxis']
+                _date_of_death = args['date_of_death']
+                _place_of_death = args['place_of_death']
+                _reason_of_death = args['reason_of_death']
+                _remarks = args['remarks']
+
+                ret, status = create_veterinary_history(_lion_id, _microchip_number, _approx_age,
+                                                        _category_based_on_age, _sex,
+                                                        _if_female_lactating_or_not, _radio_collar_no,
+                                                        _frequency_on_reciever, _date_of_radio_collaring,
+                                                        _place_of_radio_collaring, _date_of_rescue, _place_of_rescue,
+                                                        _reason_of_rescue, _date_of_release, _place_of_release,
+                                                        _captivity_details, _clinical_observations,
+                                                        _veterinary_treatment_or_prophylaxis, _date_of_death,
+                                                        _place_of_death, _reason_of_death, _remarks)
+                rv = dict()
+                rv['status'] = status
+                if ret == 0:
+                    return rv, 200
+                else:
+                    return rv, 404
+            except Exception as e:
+                rv = dict()
+                rv['status'] = str(e)
+                return rv, 404
+
+    #veterinary_History_select
     @api.route('/veterinary_health details')
     class GetAllLionsService(Resource):
         @api.doc(responses={ "response": 'json'})
